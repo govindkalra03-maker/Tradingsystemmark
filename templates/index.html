@@ -1,0 +1,610 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>SEPA Scanner — Minervini Trend Template</title>
+<style>
+:root {
+  --bg:       #0d0d1a;
+  --panel:    #12122a;
+  --border:   #1e1e3a;
+  --cyan:     #00d4ff;
+  --gold:     #ffd700;
+  --orange:   #ff8c00;
+  --green:    #7cfc00;
+  --red:      #ff4545;
+  --lime:     #45ff88;
+  --text:     #ccccdd;
+  --muted:    #6667a0;
+}
+* { box-sizing: border-box; margin: 0; padding: 0; }
+body {
+  background: var(--bg);
+  color: var(--text);
+  font-family: 'Segoe UI', system-ui, -apple-system, sans-serif;
+  min-height: 100vh;
+}
+
+/* ── Header ─────────────────────────────────────────────────────────────────── */
+header {
+  background: var(--panel);
+  border-bottom: 1px solid var(--border);
+  padding: 14px 32px;
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  position: sticky;
+  top: 0;
+  z-index: 100;
+}
+.logo {
+  width: 38px; height: 38px;
+  background: linear-gradient(135deg, var(--cyan) 0%, var(--green) 100%);
+  border-radius: 9px;
+  display: flex; align-items: center; justify-content: center;
+  font-size: 20px; font-weight: 900; color: #000; flex-shrink: 0;
+}
+.header-text h1 { font-size: 18px; font-weight: 700; color: #fff; letter-spacing: 0.4px; }
+.header-text p  { font-size: 12px; color: var(--muted); margin-top: 1px; }
+.header-meta {
+  margin-left: auto;
+  font-size: 12px; color: var(--muted);
+  text-align: right;
+}
+
+/* ── Main ───────────────────────────────────────────────────────────────────── */
+main {
+  max-width: 1640px;
+  margin: 0 auto;
+  padding: 24px 32px;
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+}
+
+/* ── Card ───────────────────────────────────────────────────────────────────── */
+.card {
+  background: var(--panel);
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  overflow: hidden;
+}
+.card-header {
+  padding: 14px 22px;
+  border-bottom: 1px solid var(--border);
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+.card-title { font-size: 14px; font-weight: 600; color: #fff; }
+.card-body  { padding: 22px; }
+
+/* ── Buttons ────────────────────────────────────────────────────────────────── */
+.btn {
+  padding: 10px 22px; border-radius: 8px; border: none; cursor: pointer;
+  font-size: 14px; font-weight: 600; transition: all 0.18s;
+  display: inline-flex; align-items: center; gap: 7px;
+}
+.btn-primary {
+  background: linear-gradient(135deg, var(--cyan), #009dc0);
+  color: #000;
+}
+.btn-primary:hover:not(:disabled) {
+  transform: translateY(-1px);
+  box-shadow: 0 4px 22px rgba(0,212,255,0.35);
+}
+.btn-primary:disabled { opacity: 0.45; cursor: not-allowed; transform: none; box-shadow: none; }
+.btn-outline {
+  background: transparent;
+  color: var(--text);
+  border: 1px solid var(--border);
+}
+.btn-outline:hover:not(:disabled) { background: rgba(255,255,255,0.04); border-color: #333355; }
+.btn-outline:disabled { opacity: 0.4; cursor: not-allowed; }
+
+/* ── Stat grid ──────────────────────────────────────────────────────────────── */
+.stats-row {
+  display: flex;
+  gap: 14px;
+  flex-wrap: wrap;
+  align-items: center;
+}
+.stat-box {
+  background: var(--bg);
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  padding: 10px 18px;
+  min-width: 110px;
+}
+.stat-box .lbl { font-size: 10px; color: var(--muted); text-transform: uppercase; letter-spacing: 0.8px; margin-bottom: 4px; }
+.stat-box .val { font-size: 20px; font-weight: 700; color: var(--cyan); }
+.stat-box .val.gold { color: var(--gold); }
+.stat-box .val.lime { color: var(--lime); }
+
+/* ── Progress ───────────────────────────────────────────────────────────────── */
+.progress-wrap { display: none; margin-top: 18px; }
+.progress-wrap.show { display: block; }
+.progress-meta {
+  display: flex; justify-content: space-between;
+  font-size: 12px; color: var(--muted); margin-bottom: 7px;
+}
+.progress-track {
+  height: 7px; background: var(--border); border-radius: 4px; overflow: hidden;
+}
+.progress-fill {
+  height: 100%;
+  background: linear-gradient(90deg, var(--cyan), var(--lime));
+  border-radius: 4px;
+  transition: width 0.6s ease;
+  width: 0%;
+}
+.progress-fill.pulse { animation: pulse-glow 1.5s ease-in-out infinite alternate; }
+@keyframes pulse-glow {
+  from { box-shadow: 0 0 4px rgba(0,212,255,0.4); }
+  to   { box-shadow: 0 0 12px rgba(0,212,255,0.9); }
+}
+.progress-ticker { margin-top: 6px; font-size: 12px; color: var(--muted); }
+.progress-ticker strong { color: var(--cyan); }
+
+/* ── Log ────────────────────────────────────────────────────────────────────── */
+.log-wrap { display: none; margin-top: 14px; }
+.log-wrap.show { display: block; }
+.log-box {
+  background: var(--bg);
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  padding: 10px 14px;
+  max-height: 150px;
+  overflow-y: auto;
+}
+.log-line {
+  font-size: 11.5px; font-family: 'Courier New', monospace;
+  line-height: 1.65; color: #44446a;
+}
+.log-line.pass  { color: var(--lime); }
+.log-line.fail  { color: #44446a; }
+.log-line.error { color: var(--red); }
+.log-line.bench { color: var(--gold); }
+
+/* ── Results table ──────────────────────────────────────────────────────────── */
+.results-toolbar {
+  display: flex; align-items: center; gap: 10px;
+  flex-wrap: wrap;
+}
+.badge {
+  padding: 3px 10px; border-radius: 99px; font-size: 11px; font-weight: 600;
+  background: rgba(0,212,255,0.12); color: var(--cyan); border: 1px solid rgba(0,212,255,0.25);
+}
+.toolbar-hint { margin-left: auto; font-size: 11px; color: var(--muted); }
+
+.table-wrap { overflow-x: auto; }
+table { width: 100%; border-collapse: collapse; font-size: 13px; }
+thead th {
+  background: var(--bg);
+  padding: 9px 13px;
+  text-align: left;
+  color: var(--muted);
+  font-size: 10.5px; font-weight: 600;
+  text-transform: uppercase; letter-spacing: 0.55px;
+  cursor: pointer; white-space: nowrap; user-select: none;
+  border-bottom: 1px solid var(--border);
+  transition: color 0.15s;
+}
+thead th:hover { color: var(--cyan); }
+thead th.sorted-asc::after  { content: ' ↑'; color: var(--cyan); }
+thead th.sorted-desc::after { content: ' ↓'; color: var(--cyan); }
+thead th:not(.sorted-asc):not(.sorted-desc)::after { content: ' ↕'; opacity: 0.22; }
+tbody tr { border-bottom: 1px solid var(--border); transition: background 0.12s; }
+tbody tr:last-child { border-bottom: none; }
+tbody tr:hover { background: rgba(255,255,255,0.025); }
+tbody td { padding: 9px 13px; white-space: nowrap; }
+
+.ticker-cell { display: flex; align-items: center; gap: 7px; }
+.ticker-name {
+  font-weight: 700; color: var(--cyan); cursor: pointer;
+  transition: opacity 0.15s;
+}
+.ticker-name:hover { opacity: 0.75; text-decoration: underline; }
+.chart-btn {
+  background: none; border: 1px solid var(--border);
+  color: var(--muted); padding: 2px 7px; border-radius: 4px;
+  cursor: pointer; font-size: 10.5px; transition: all 0.15s;
+}
+.chart-btn:hover { border-color: var(--cyan); color: var(--cyan); }
+
+.pos { color: var(--lime); }
+.neg { color: var(--red); }
+.dim { color: var(--muted); }
+
+/* ── Empty state ────────────────────────────────────────────────────────────── */
+.empty-state {
+  text-align: center; padding: 64px 24px; color: var(--muted);
+}
+.empty-icon { font-size: 44px; margin-bottom: 12px; opacity: 0.5; }
+.empty-state h3 { font-size: 15px; font-weight: 600; color: var(--text); margin-bottom: 6px; }
+.empty-state p  { font-size: 13px; }
+
+/* ── Modal ──────────────────────────────────────────────────────────────────── */
+.overlay {
+  position: fixed; inset: 0;
+  background: rgba(0,0,0,0.82);
+  z-index: 500;
+  display: none; align-items: center; justify-content: center;
+  padding: 20px;
+  backdrop-filter: blur(3px);
+}
+.overlay.open { display: flex; }
+.modal {
+  background: var(--panel);
+  border: 1px solid var(--border);
+  border-radius: 14px;
+  max-width: 1220px; width: 100%;
+  animation: modal-in 0.2s ease;
+}
+@keyframes modal-in {
+  from { opacity: 0; transform: scale(0.96); }
+  to   { opacity: 1; transform: scale(1); }
+}
+.modal-hd {
+  padding: 14px 18px;
+  border-bottom: 1px solid var(--border);
+  display: flex; align-items: center; justify-content: space-between;
+}
+.modal-hd-title { font-size: 15px; font-weight: 700; color: #fff; }
+.modal-close {
+  background: none; border: none; color: var(--muted);
+  font-size: 24px; line-height: 1; cursor: pointer; padding: 2px 6px; border-radius: 4px;
+  transition: all 0.15s;
+}
+.modal-close:hover { color: #fff; background: rgba(255,255,255,0.06); }
+.modal-bd { padding: 14px; }
+.modal-bd img { width: 100%; border-radius: 8px; display: block; }
+.modal-loading { text-align: center; padding: 60px; color: var(--muted); font-size: 14px; }
+
+/* ── Scrollbar ──────────────────────────────────────────────────────────────── */
+::-webkit-scrollbar { width: 5px; height: 5px; }
+::-webkit-scrollbar-track { background: var(--bg); }
+::-webkit-scrollbar-thumb { background: var(--border); border-radius: 3px; }
+::-webkit-scrollbar-thumb:hover { background: #2e2e55; }
+</style>
+</head>
+<body>
+
+<!-- ── Header ──────────────────────────────────────────────────────────────── -->
+<header>
+  <div class="logo">S</div>
+  <div class="header-text">
+    <h1>SEPA Scanner</h1>
+    <p>Minervini Trend Template &nbsp;·&nbsp; NSE Nifty 500</p>
+  </div>
+  <div class="header-meta" id="last-scan-meta"></div>
+</header>
+
+<!-- ── Main ────────────────────────────────────────────────────────────────── -->
+<main>
+
+  <!-- Scan control card -->
+  <div class="card">
+    <div class="card-header">
+      <span class="card-title">Scan Controls</span>
+    </div>
+    <div class="card-body">
+
+      <div class="stats-row">
+        <button class="btn btn-primary" id="scan-btn" onclick="startScan()">
+          ▶&ensp;Run Full Scan
+        </button>
+        <button class="btn btn-outline" id="export-btn" onclick="exportCSV()" disabled>
+          ↓&ensp;Export CSV
+        </button>
+
+        <div class="stat-box">
+          <div class="lbl">Nifty 500 12m Return</div>
+          <div class="val gold" id="bench-val">—</div>
+        </div>
+        <div class="stat-box">
+          <div class="lbl">Tickers Scanned</div>
+          <div class="val" id="stat-scanned">0 / 500</div>
+        </div>
+        <div class="stat-box">
+          <div class="lbl">SEPA Passed</div>
+          <div class="val lime" id="stat-passed">0</div>
+        </div>
+      </div>
+
+      <!-- Progress bar -->
+      <div class="progress-wrap" id="prog-wrap">
+        <div class="progress-meta">
+          <span id="prog-label">Scanning…</span>
+          <span id="prog-pct">0%</span>
+        </div>
+        <div class="progress-track">
+          <div class="progress-fill pulse" id="prog-fill"></div>
+        </div>
+        <div class="progress-ticker">
+          Processing: <strong id="prog-ticker">—</strong>
+        </div>
+      </div>
+
+      <!-- Activity log -->
+      <div class="log-wrap" id="log-wrap">
+        <div class="log-box" id="log-box"></div>
+      </div>
+
+    </div>
+  </div>
+
+  <!-- Results card -->
+  <div class="card">
+    <div class="card-header">
+      <span class="card-title">SEPA Signal Results</span>
+      <span class="badge" id="result-badge">0 stocks</span>
+      <div class="toolbar-hint">Click a column header to sort &nbsp;·&nbsp; Click a ticker to view chart</div>
+    </div>
+    <div id="results-area">
+      <div class="empty-state">
+        <div class="empty-icon">📊</div>
+        <h3>No results yet</h3>
+        <p>Press <strong>Run Full Scan</strong> to scan all 500 Nifty stocks.<br>
+           The scan checks all 8 Minervini SEPA conditions and takes ~10–15 minutes.</p>
+      </div>
+    </div>
+  </div>
+
+</main>
+
+<!-- Chart Modal -->
+<div class="overlay" id="overlay" onclick="maybeClose(event)">
+  <div class="modal">
+    <div class="modal-hd">
+      <div class="modal-hd-title" id="modal-title">Chart</div>
+      <button class="modal-close" onclick="closeModal()">×</button>
+    </div>
+    <div class="modal-bd" id="modal-bd">
+      <div class="modal-loading">Loading chart…</div>
+    </div>
+  </div>
+</div>
+
+<script>
+// ── Column definitions ────────────────────────────────────────────────────────
+const COLS = [
+  { key: "Ticker",        label: "Ticker",          fmt: null },
+  { key: "Last_Close",    label: "Price (₹)",        fmt: v => fmtINR(v) },
+  { key: "SMA_50",        label: "SMA 50",           fmt: v => fmtINR(v) },
+  { key: "SMA_150",       label: "SMA 150",          fmt: v => fmtINR(v) },
+  { key: "SMA_200",       label: "SMA 200",          fmt: v => fmtINR(v) },
+  { key: "SMA_200_Slope", label: "SMA 200 Slope",    fmt: v => `${v>=0?'+':''}${v.toFixed(2)}` },
+  { key: "52w_High",      label: "52w High",         fmt: v => fmtINR(v) },
+  { key: "52w_Low",       label: "52w Low",          fmt: v => fmtINR(v) },
+  { key: "Pct_From_High", label: "% from High",      fmt: v => `${v.toFixed(2)}%` },
+  { key: "Pct_From_Low",  label: "% from Low",       fmt: v => `+${v.toFixed(2)}%` },
+  { key: "HighLow_Ratio", label: "H/L Ratio",        fmt: v => v.toFixed(3) },
+  { key: "RS_vs_Nifty",   label: "RS vs Nifty",      fmt: v => `${v>=0?'+':''}${v.toFixed(2)}%` },
+  { key: "Vol_Ratio",     label: "Vol ×",            fmt: v => v != null ? `${v.toFixed(2)}×` : '—' },
+];
+
+function fmtINR(v) {
+  return '₹' + v.toLocaleString('en-IN', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+}
+
+// ── State ─────────────────────────────────────────────────────────────────────
+let pollTimer  = null;
+let sortCol    = "RS_vs_Nifty";
+let sortDir    = "desc";
+let allResults = [];
+
+// ── Start scan ────────────────────────────────────────────────────────────────
+async function startScan() {
+  const btn = document.getElementById('scan-btn');
+  btn.disabled = true;
+
+  const res = await fetch('/api/scan/start', { method: 'POST' });
+  if (!res.ok) {
+    const d = await res.json().catch(() => ({}));
+    alert(d.error || 'Could not start scan.');
+    btn.disabled = false;
+    return;
+  }
+
+  // Reset UI
+  allResults = [];
+  document.getElementById('stat-scanned').textContent = '0 / 500';
+  document.getElementById('stat-passed').textContent  = '0';
+  document.getElementById('result-badge').textContent = '0 stocks';
+  document.getElementById('bench-val').textContent    = '—';
+  document.getElementById('log-box').innerHTML        = '';
+  showEmpty();
+
+  show('prog-wrap');
+  show('log-wrap');
+
+  const fill = document.getElementById('prog-fill');
+  fill.style.width = '0%';
+  fill.classList.add('pulse');
+
+  pollTimer = setInterval(poll, 2000);
+}
+
+// ── Poll progress ─────────────────────────────────────────────────────────────
+async function poll() {
+  try {
+    const res  = await fetch('/api/scan/progress');
+    const data = await res.json();
+    applyUpdate(data);
+
+    if (!data.running && data.completed) {
+      clearInterval(pollTimer);
+      pollTimer = null;
+      document.getElementById('scan-btn').disabled = false;
+      document.getElementById('prog-fill').classList.remove('pulse');
+
+      if (data.results.length) {
+        document.getElementById('export-btn').disabled = false;
+      }
+      if (data.completed_at) {
+        const t = new Date(data.completed_at);
+        document.getElementById('last-scan-meta').textContent =
+          'Last scan: ' + t.toLocaleDateString('en-IN') + ' ' + t.toLocaleTimeString('en-IN');
+      }
+    }
+  } catch (e) {
+    console.error('Poll error', e);
+  }
+}
+
+// ── Apply progress data ───────────────────────────────────────────────────────
+function applyUpdate(data) {
+  const pct = data.total > 0 ? Math.round(data.current_idx / data.total * 100) : 0;
+
+  document.getElementById('prog-fill').style.width    = pct + '%';
+  document.getElementById('prog-pct').textContent     = pct + '%';
+  document.getElementById('prog-label').textContent   = data.running ? 'Scanning…' : (data.error ? '⚠ Error' : 'Complete ✓');
+  document.getElementById('prog-ticker').textContent  = data.current_ticker || '—';
+  document.getElementById('stat-scanned').textContent = `${data.current_idx} / ${data.total}`;
+  document.getElementById('stat-passed').textContent  = data.passed;
+  document.getElementById('result-badge').textContent = `${data.passed} stock${data.passed !== 1 ? 's' : ''}`;
+
+  if (data.benchmark_return != null) {
+    const br = data.benchmark_return;
+    document.getElementById('bench-val').textContent = (br >= 0 ? '+' : '') + br.toFixed(2) + '%';
+  }
+
+  // Log
+  if (data.log && data.log.length) {
+    const logBox = document.getElementById('log-box');
+    logBox.innerHTML = data.log.slice().reverse().map(line => {
+      let cls = 'log-line';
+      if (line.startsWith('PASS'))  cls += ' pass';
+      else if (line.startsWith('ERROR')) cls += ' error';
+      else if (line.startsWith('Benchmark') || line.startsWith('Scan complete')) cls += ' bench';
+      return `<div class="${cls}">${escHtml(line)}</div>`;
+    }).join('');
+  }
+
+  // Table — only re-render when result count changes
+  if (data.results.length !== allResults.length) {
+    allResults = data.results;
+    renderTable();
+  }
+}
+
+// ── Table rendering ───────────────────────────────────────────────────────────
+function renderTable() {
+  const area = document.getElementById('results-area');
+  if (!allResults.length) { showEmpty(); return; }
+
+  const sorted = [...allResults].sort((a, b) => {
+    const va = a[sortCol], vb = b[sortCol];
+    if (va == null && vb == null) return 0;
+    if (va == null) return 1;
+    if (vb == null) return -1;
+    if (typeof va === 'string') return sortDir === 'asc' ? va.localeCompare(vb) : vb.localeCompare(va);
+    return sortDir === 'asc' ? va - vb : vb - va;
+  });
+
+  let html = `<div class="table-wrap"><table><thead><tr>`;
+  COLS.forEach(c => {
+    const cls = c.key === sortCol ? (sortDir === 'asc' ? 'sorted-asc' : 'sorted-desc') : '';
+    html += `<th class="${cls}" onclick="sortBy('${c.key}')">${c.label}</th>`;
+  });
+  html += `</tr></thead><tbody>`;
+
+  sorted.forEach(row => {
+    html += `<tr>`;
+    COLS.forEach(c => {
+      if (c.key === 'Ticker') {
+        html += `<td><div class="ticker-cell">
+          <span class="ticker-name" onclick="openChart('${escAttr(row.Ticker)}')">${escHtml(row.Ticker)}</span>
+          <button class="chart-btn" onclick="openChart('${escAttr(row.Ticker)}')">Chart</button>
+        </div></td>`;
+        return;
+      }
+      const val = row[c.key];
+      const txt = (val != null && c.fmt) ? c.fmt(val) : (val ?? '—');
+      let cls = '';
+      if (c.key === 'RS_vs_Nifty'   && val != null) cls = val >= 0 ? 'pos' : 'neg';
+      if (c.key === 'SMA_200_Slope' && val != null) cls = val >= 0 ? 'pos' : 'neg';
+      if (c.key === 'Pct_From_High') cls = 'neg';
+      if (c.key === 'Pct_From_Low')  cls = 'pos';
+      if (c.key === 'Vol_Ratio' && val != null) cls = val >= 1.5 ? 'pos' : '';
+      html += `<td class="${cls}">${txt}</td>`;
+    });
+    html += `</tr>`;
+  });
+
+  html += `</tbody></table></div>`;
+  area.innerHTML = html;
+}
+
+function sortBy(col) {
+  sortDir = sortCol === col ? (sortDir === 'asc' ? 'desc' : 'asc') : (col === 'Ticker' ? 'asc' : 'desc');
+  sortCol = col;
+  renderTable();
+}
+
+function showEmpty() {
+  document.getElementById('results-area').innerHTML = `
+    <div class="empty-state">
+      <div class="empty-icon">📊</div>
+      <h3>No results yet</h3>
+      <p>Press <strong>Run Full Scan</strong> to scan all 500 Nifty stocks.<br>
+         The scan checks all 8 Minervini SEPA conditions and takes ~10–15 minutes.</p>
+    </div>`;
+}
+
+// ── Chart modal ───────────────────────────────────────────────────────────────
+function openChart(ticker) {
+  document.getElementById('modal-title').textContent = ticker + ' — SEPA Chart';
+  document.getElementById('modal-bd').innerHTML = '<div class="modal-loading">Loading chart…</div>';
+  document.getElementById('overlay').classList.add('open');
+  document.getElementById('modal-bd').innerHTML =
+    `<img src="/api/chart/${encodeURIComponent(ticker)}" alt="${escAttr(ticker)} chart"
+      onerror="this.parentElement.innerHTML='<div class=modal-loading>Chart not available — run a scan first.</div>'"
+    />`;
+}
+
+function closeModal() { document.getElementById('overlay').classList.remove('open'); }
+function maybeClose(e) { if (e.target.id === 'overlay') closeModal(); }
+document.addEventListener('keydown', e => { if (e.key === 'Escape') closeModal(); });
+
+// ── CSV export ────────────────────────────────────────────────────────────────
+function exportCSV() { window.location.href = '/api/export/csv'; }
+
+// ── Helpers ───────────────────────────────────────────────────────────────────
+function show(id) { document.getElementById(id).classList.add('show'); }
+function escHtml(s) {
+  return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
+}
+function escAttr(s) { return String(s).replace(/"/g, '&quot;'); }
+
+// ── On load: check if a scan is already running / has results ─────────────────
+(async () => {
+  try {
+    const res  = await fetch('/api/scan/progress');
+    const data = await res.json();
+    if (data.results.length || data.running) {
+      show('prog-wrap');
+      show('log-wrap');
+      allResults = data.results;
+      applyUpdate(data);
+      if (data.running) {
+        document.getElementById('scan-btn').disabled = true;
+        document.getElementById('prog-fill').classList.add('pulse');
+        pollTimer = setInterval(poll, 2000);
+      } else if (data.results.length) {
+        document.getElementById('export-btn').disabled = false;
+        document.getElementById('prog-fill').classList.remove('pulse');
+      }
+      if (data.completed_at) {
+        const t = new Date(data.completed_at);
+        document.getElementById('last-scan-meta').textContent =
+          'Last scan: ' + t.toLocaleDateString('en-IN') + ' ' + t.toLocaleTimeString('en-IN');
+      }
+    }
+  } catch (_) {}
+})();
+</script>
+</body>
+</html>
