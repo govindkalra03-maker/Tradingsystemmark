@@ -3,20 +3,20 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>SEPA Scanner — Minervini Trend Template</title>
+<title>SEPA + VCP Scanner</title>
 <style>
 :root {
-  --bg:       #0d0d1a;
-  --panel:    #12122a;
-  --border:   #1e1e3a;
-  --cyan:     #00d4ff;
-  --gold:     #ffd700;
-  --orange:   #ff8c00;
-  --green:    #7cfc00;
-  --red:      #ff4545;
-  --lime:     #45ff88;
-  --text:     #ccccdd;
-  --muted:    #6667a0;
+  --bg:     #0d0d1a;
+  --panel:  #12122a;
+  --border: #1e1e3a;
+  --cyan:   #00d4ff;
+  --gold:   #ffd700;
+  --orange: #ff8c00;
+  --green:  #7cfc00;
+  --red:    #ff4545;
+  --lime:   #45ff88;
+  --text:   #ccccdd;
+  --muted:  #6667a0;
 }
 * { box-sizing: border-box; margin: 0; padding: 0; }
 body {
@@ -30,61 +30,73 @@ body {
 header {
   background: var(--panel);
   border-bottom: 1px solid var(--border);
-  padding: 14px 32px;
-  display: flex;
-  align-items: center;
-  gap: 14px;
-  position: sticky;
-  top: 0;
-  z-index: 100;
+  padding: 13px 28px;
+  display: flex; align-items: center; gap: 13px;
+  position: sticky; top: 0; z-index: 200;
 }
 .logo {
-  width: 38px; height: 38px;
-  background: linear-gradient(135deg, var(--cyan) 0%, var(--green) 100%);
-  border-radius: 9px;
+  width: 36px; height: 36px;
+  background: linear-gradient(135deg, var(--cyan), var(--green));
+  border-radius: 8px;
   display: flex; align-items: center; justify-content: center;
-  font-size: 20px; font-weight: 900; color: #000; flex-shrink: 0;
+  font-size: 18px; font-weight: 900; color: #000; flex-shrink: 0;
 }
-.header-text h1 { font-size: 18px; font-weight: 700; color: #fff; letter-spacing: 0.4px; }
-.header-text p  { font-size: 12px; color: var(--muted); margin-top: 1px; }
-.header-meta {
-  margin-left: auto;
-  font-size: 12px; color: var(--muted);
-  text-align: right;
+.hdr-text h1 { font-size: 17px; font-weight: 700; color: #fff; }
+.hdr-text p  { font-size: 11px; color: var(--muted); margin-top: 1px; }
+.hdr-meta    { margin-left: auto; font-size: 11px; color: var(--muted); text-align: right; }
+
+/* ── Tab nav ─────────────────────────────────────────────────────────────────── */
+.tab-nav {
+  display: flex; gap: 2px;
+  padding: 0 28px;
+  background: var(--panel);
+  border-bottom: 1px solid var(--border);
+}
+.tab-btn {
+  padding: 11px 22px;
+  background: none; border: none;
+  border-bottom: 2px solid transparent;
+  color: var(--muted);
+  font-size: 13px; font-weight: 600;
+  cursor: pointer; transition: all 0.15s;
+  margin-bottom: -1px;
+}
+.tab-btn:hover   { color: var(--text); }
+.tab-btn.active  { color: var(--cyan); border-bottom-color: var(--cyan); }
+.tab-btn .badge-tab {
+  display: inline-block;
+  margin-left: 6px;
+  padding: 1px 7px; border-radius: 99px;
+  font-size: 10px; font-weight: 700;
+  background: rgba(0,212,255,0.12); color: var(--cyan);
+  border: 1px solid rgba(0,212,255,0.22);
 }
 
-/* ── Main ───────────────────────────────────────────────────────────────────── */
-main {
-  max-width: 1640px;
-  margin: 0 auto;
-  padding: 24px 32px;
-  display: flex;
-  flex-direction: column;
-  gap: 20px;
-}
+/* ── Layout ──────────────────────────────────────────────────────────────────── */
+main { max-width: 1680px; margin: 0 auto; padding: 22px 28px; }
+.tab-panel { display: none; }
+.tab-panel.active { display: flex; flex-direction: column; gap: 18px; }
 
-/* ── Card ───────────────────────────────────────────────────────────────────── */
+/* ── Card ────────────────────────────────────────────────────────────────────── */
 .card {
   background: var(--panel);
   border: 1px solid var(--border);
   border-radius: 12px;
   overflow: hidden;
 }
-.card-header {
-  padding: 14px 22px;
+.card-hdr {
+  padding: 13px 20px;
   border-bottom: 1px solid var(--border);
-  display: flex;
-  align-items: center;
-  gap: 12px;
+  display: flex; align-items: center; gap: 10px;
 }
-.card-title { font-size: 14px; font-weight: 600; color: #fff; }
-.card-body  { padding: 22px; }
+.card-title { font-size: 13px; font-weight: 600; color: #fff; }
+.card-body  { padding: 20px; }
 
-/* ── Buttons ────────────────────────────────────────────────────────────────── */
+/* ── Buttons ─────────────────────────────────────────────────────────────────── */
 .btn {
-  padding: 10px 22px; border-radius: 8px; border: none; cursor: pointer;
-  font-size: 14px; font-weight: 600; transition: all 0.18s;
-  display: inline-flex; align-items: center; gap: 7px;
+  padding: 9px 20px; border-radius: 8px; border: none; cursor: pointer;
+  font-size: 13px; font-weight: 600; transition: all 0.18s;
+  display: inline-flex; align-items: center; gap: 6px;
 }
 .btn-primary {
   background: linear-gradient(135deg, var(--cyan), #009dc0);
@@ -92,124 +104,97 @@ main {
 }
 .btn-primary:hover:not(:disabled) {
   transform: translateY(-1px);
-  box-shadow: 0 4px 22px rgba(0,212,255,0.35);
+  box-shadow: 0 4px 18px rgba(0,212,255,0.35);
 }
-.btn-primary:disabled { opacity: 0.45; cursor: not-allowed; transform: none; box-shadow: none; }
+.btn-primary:disabled { opacity: 0.4; cursor: not-allowed; transform: none; box-shadow: none; }
+.btn-vcp {
+  background: linear-gradient(135deg, var(--gold), #cc9900);
+  color: #000;
+}
+.btn-vcp:hover:not(:disabled) {
+  transform: translateY(-1px);
+  box-shadow: 0 4px 18px rgba(255,215,0,0.35);
+}
+.btn-vcp:disabled { opacity: 0.4; cursor: not-allowed; transform: none; box-shadow: none; }
 .btn-outline {
-  background: transparent;
-  color: var(--text);
+  background: transparent; color: var(--text);
   border: 1px solid var(--border);
 }
-.btn-outline:hover:not(:disabled) { background: rgba(255,255,255,0.04); border-color: #333355; }
+.btn-outline:hover:not(:disabled) { background: rgba(255,255,255,0.04); }
 .btn-outline:disabled { opacity: 0.4; cursor: not-allowed; }
 
-/* ── Stat grid ──────────────────────────────────────────────────────────────── */
-.stats-row {
-  display: flex;
-  gap: 14px;
-  flex-wrap: wrap;
-  align-items: center;
-}
+/* ── Stats row ───────────────────────────────────────────────────────────────── */
+.stats-row { display: flex; gap: 12px; flex-wrap: wrap; align-items: center; }
 .stat-box {
-  background: var(--bg);
-  border: 1px solid var(--border);
-  border-radius: 8px;
-  padding: 10px 18px;
-  min-width: 110px;
+  background: var(--bg); border: 1px solid var(--border);
+  border-radius: 8px; padding: 9px 16px; min-width: 108px;
 }
-.stat-box .lbl { font-size: 10px; color: var(--muted); text-transform: uppercase; letter-spacing: 0.8px; margin-bottom: 4px; }
-.stat-box .val { font-size: 20px; font-weight: 700; color: var(--cyan); }
+.stat-box .lbl { font-size: 10px; color: var(--muted); text-transform: uppercase; letter-spacing: 0.7px; margin-bottom: 3px; }
+.stat-box .val { font-size: 19px; font-weight: 700; color: var(--cyan); }
 .stat-box .val.gold { color: var(--gold); }
 .stat-box .val.lime { color: var(--lime); }
 
-/* ── Progress ───────────────────────────────────────────────────────────────── */
-.progress-wrap { display: none; margin-top: 18px; }
-.progress-wrap.show { display: block; }
-.progress-meta {
-  display: flex; justify-content: space-between;
-  font-size: 12px; color: var(--muted); margin-bottom: 7px;
+/* ── Progress ────────────────────────────────────────────────────────────────── */
+.prog-wrap { display: none; margin-top: 16px; }
+.prog-wrap.show { display: block; }
+.prog-meta { display: flex; justify-content: space-between; font-size: 11px; color: var(--muted); margin-bottom: 6px; }
+.prog-track { height: 7px; background: var(--border); border-radius: 4px; overflow: hidden; }
+.prog-fill  { height: 100%; border-radius: 4px; transition: width 0.55s ease; width: 0%; }
+.prog-fill.sepa-fill { background: linear-gradient(90deg, var(--cyan), var(--lime)); }
+.prog-fill.vcp-fill  { background: linear-gradient(90deg, var(--gold), var(--orange)); }
+.prog-fill.pulse { animation: glow 1.4s ease-in-out infinite alternate; }
+@keyframes glow {
+  from { box-shadow: 0 0 3px rgba(0,212,255,0.3); }
+  to   { box-shadow: 0 0 10px rgba(0,212,255,0.8); }
 }
-.progress-track {
-  height: 7px; background: var(--border); border-radius: 4px; overflow: hidden;
-}
-.progress-fill {
-  height: 100%;
-  background: linear-gradient(90deg, var(--cyan), var(--lime));
-  border-radius: 4px;
-  transition: width 0.6s ease;
-  width: 0%;
-}
-.progress-fill.pulse { animation: pulse-glow 1.5s ease-in-out infinite alternate; }
-@keyframes pulse-glow {
-  from { box-shadow: 0 0 4px rgba(0,212,255,0.4); }
-  to   { box-shadow: 0 0 12px rgba(0,212,255,0.9); }
-}
-.progress-ticker { margin-top: 6px; font-size: 12px; color: var(--muted); }
-.progress-ticker strong { color: var(--cyan); }
+.prog-ticker { margin-top: 5px; font-size: 12px; color: var(--muted); }
+.prog-ticker strong { color: var(--cyan); }
 
-/* ── Log ────────────────────────────────────────────────────────────────────── */
-.log-wrap { display: none; margin-top: 14px; }
+/* ── Log ─────────────────────────────────────────────────────────────────────── */
+.log-wrap { display: none; margin-top: 12px; }
 .log-wrap.show { display: block; }
 .log-box {
-  background: var(--bg);
-  border: 1px solid var(--border);
-  border-radius: 8px;
-  padding: 10px 14px;
-  max-height: 150px;
-  overflow-y: auto;
+  background: var(--bg); border: 1px solid var(--border);
+  border-radius: 8px; padding: 9px 13px;
+  max-height: 140px; overflow-y: auto;
 }
-.log-line {
-  font-size: 11.5px; font-family: 'Courier New', monospace;
-  line-height: 1.65; color: #44446a;
-}
+.log-line { font-size: 11px; font-family: 'Courier New', monospace; line-height: 1.65; color: #44446a; }
 .log-line.pass  { color: var(--lime); }
-.log-line.fail  { color: #44446a; }
 .log-line.error { color: var(--red); }
 .log-line.bench { color: var(--gold); }
 
-/* ── Results table ──────────────────────────────────────────────────────────── */
-.results-toolbar {
-  display: flex; align-items: center; gap: 10px;
-  flex-wrap: wrap;
-}
+/* ── Table ───────────────────────────────────────────────────────────────────── */
+.tbl-hint { margin-left: auto; font-size: 11px; color: var(--muted); }
 .badge {
-  padding: 3px 10px; border-radius: 99px; font-size: 11px; font-weight: 600;
-  background: rgba(0,212,255,0.12); color: var(--cyan); border: 1px solid rgba(0,212,255,0.25);
+  padding: 2px 9px; border-radius: 99px; font-size: 11px; font-weight: 600;
+  background: rgba(0,212,255,0.12); color: var(--cyan); border: 1px solid rgba(0,212,255,0.24);
 }
-.toolbar-hint { margin-left: auto; font-size: 11px; color: var(--muted); }
-
-.table-wrap { overflow-x: auto; }
-table { width: 100%; border-collapse: collapse; font-size: 13px; }
+.tbl-wrap { overflow-x: auto; }
+table { width: 100%; border-collapse: collapse; font-size: 12.5px; }
 thead th {
-  background: var(--bg);
-  padding: 9px 13px;
-  text-align: left;
-  color: var(--muted);
-  font-size: 10.5px; font-weight: 600;
-  text-transform: uppercase; letter-spacing: 0.55px;
+  background: var(--bg); padding: 8px 12px;
+  text-align: left; color: var(--muted);
+  font-size: 10px; font-weight: 600; text-transform: uppercase; letter-spacing: 0.5px;
   cursor: pointer; white-space: nowrap; user-select: none;
-  border-bottom: 1px solid var(--border);
-  transition: color 0.15s;
+  border-bottom: 1px solid var(--border); transition: color 0.14s;
 }
 thead th:hover { color: var(--cyan); }
-thead th.sorted-asc::after  { content: ' ↑'; color: var(--cyan); }
-thead th.sorted-desc::after { content: ' ↓'; color: var(--cyan); }
-thead th:not(.sorted-asc):not(.sorted-desc)::after { content: ' ↕'; opacity: 0.22; }
+thead th.s-asc::after  { content: ' ↑'; color: var(--cyan); }
+thead th.s-desc::after { content: ' ↓'; color: var(--cyan); }
+thead th:not(.s-asc):not(.s-desc)::after { content: ' ↕'; opacity: 0.2; }
 tbody tr { border-bottom: 1px solid var(--border); transition: background 0.12s; }
 tbody tr:last-child { border-bottom: none; }
-tbody tr:hover { background: rgba(255,255,255,0.025); }
-tbody td { padding: 9px 13px; white-space: nowrap; }
+tbody tr:hover { background: rgba(255,255,255,0.022); }
+tbody td { padding: 8px 12px; white-space: nowrap; }
 
-.ticker-cell { display: flex; align-items: center; gap: 7px; }
-.ticker-name {
-  font-weight: 700; color: var(--cyan); cursor: pointer;
-  transition: opacity 0.15s;
+.tkr-cell { display: flex; align-items: center; gap: 6px; }
+.tkr-name {
+  font-weight: 700; color: var(--cyan); cursor: pointer; transition: opacity 0.14s;
 }
-.ticker-name:hover { opacity: 0.75; text-decoration: underline; }
+.tkr-name:hover { opacity: 0.7; text-decoration: underline; }
 .chart-btn {
-  background: none; border: 1px solid var(--border);
-  color: var(--muted); padding: 2px 7px; border-radius: 4px;
-  cursor: pointer; font-size: 10.5px; transition: all 0.15s;
+  background: none; border: 1px solid var(--border); color: var(--muted);
+  padding: 1px 7px; border-radius: 4px; cursor: pointer; font-size: 10px; transition: all 0.14s;
 }
 .chart-btn:hover { border-color: var(--cyan); color: var(--cyan); }
 
@@ -217,52 +202,96 @@ tbody td { padding: 9px 13px; white-space: nowrap; }
 .neg { color: var(--red); }
 .dim { color: var(--muted); }
 
-/* ── Empty state ────────────────────────────────────────────────────────────── */
-.empty-state {
-  text-align: center; padding: 64px 24px; color: var(--muted);
+/* VCP score pill */
+.score-pill {
+  display: inline-block; padding: 1px 8px; border-radius: 99px;
+  font-size: 11px; font-weight: 700;
 }
-.empty-icon { font-size: 44px; margin-bottom: 12px; opacity: 0.5; }
-.empty-state h3 { font-size: 15px; font-weight: 600; color: var(--text); margin-bottom: 6px; }
-.empty-state p  { font-size: 13px; }
+.score-ex { background: rgba(69,255,136,0.18); color: var(--lime); }
+.score-gd { background: rgba(255,215,0,0.18); color: var(--gold); }
+.score-ok { background: rgba(255,140,0,0.18); color: var(--orange); }
 
-/* ── Modal ──────────────────────────────────────────────────────────────────── */
+/* ── Empty state ─────────────────────────────────────────────────────────────── */
+.empty { text-align: center; padding: 60px 24px; color: var(--muted); }
+.empty-icon { font-size: 42px; margin-bottom: 10px; opacity: 0.45; }
+.empty h3 { font-size: 14px; font-weight: 600; color: var(--text); margin-bottom: 5px; }
+.empty p  { font-size: 12px; }
+
+/* ── VCP info box ────────────────────────────────────────────────────────────── */
+.vcp-info {
+  background: rgba(255,215,0,0.06);
+  border: 1px solid rgba(255,215,0,0.25);
+  border-radius: 8px;
+  padding: 12px 16px;
+  font-size: 12px;
+  color: var(--muted);
+  line-height: 1.7;
+}
+.vcp-info strong { color: var(--gold); }
+
+/* ── Modal ───────────────────────────────────────────────────────────────────── */
 .overlay {
   position: fixed; inset: 0;
-  background: rgba(0,0,0,0.82);
+  background: rgba(0,0,0,0.84);
   z-index: 500;
   display: none; align-items: center; justify-content: center;
-  padding: 20px;
+  padding: 18px;
   backdrop-filter: blur(3px);
 }
 .overlay.open { display: flex; }
 .modal {
-  background: var(--panel);
-  border: 1px solid var(--border);
-  border-radius: 14px;
-  max-width: 1220px; width: 100%;
-  animation: modal-in 0.2s ease;
+  background: var(--panel); border: 1px solid var(--border);
+  border-radius: 14px; max-width: 1240px; width: 100%;
+  animation: m-in 0.18s ease;
 }
-@keyframes modal-in {
-  from { opacity: 0; transform: scale(0.96); }
-  to   { opacity: 1; transform: scale(1); }
-}
+@keyframes m-in { from { opacity:0; transform:scale(0.96); } to { opacity:1; transform:scale(1); } }
 .modal-hd {
-  padding: 14px 18px;
-  border-bottom: 1px solid var(--border);
+  padding: 13px 17px; border-bottom: 1px solid var(--border);
   display: flex; align-items: center; justify-content: space-between;
 }
-.modal-hd-title { font-size: 15px; font-weight: 700; color: #fff; }
+.modal-hd-title { font-size: 14px; font-weight: 700; color: #fff; }
 .modal-close {
   background: none; border: none; color: var(--muted);
-  font-size: 24px; line-height: 1; cursor: pointer; padding: 2px 6px; border-radius: 4px;
-  transition: all 0.15s;
+  font-size: 22px; line-height: 1; cursor: pointer;
+  padding: 2px 6px; border-radius: 4px; transition: all 0.14s;
 }
 .modal-close:hover { color: #fff; background: rgba(255,255,255,0.06); }
-.modal-bd { padding: 14px; }
+.modal-bd { padding: 13px; }
 .modal-bd img { width: 100%; border-radius: 8px; display: block; }
-.modal-loading { text-align: center; padding: 60px; color: var(--muted); font-size: 14px; }
+.modal-loading { text-align: center; padding: 56px; color: var(--muted); font-size: 13px; }
 
-/* ── Scrollbar ──────────────────────────────────────────────────────────────── */
+/* ── Common tab ──────────────────────────────────────────────────────────────── */
+.common-hero {
+  background: linear-gradient(135deg, rgba(0,212,255,0.07), rgba(69,255,136,0.07));
+  border: 1px solid rgba(0,212,255,0.2);
+  border-radius: 10px;
+  padding: 16px 20px;
+  display: flex; align-items: center; gap: 16px; flex-wrap: wrap;
+}
+.common-hero .big-num {
+  font-size: 52px; font-weight: 900;
+  background: linear-gradient(135deg, var(--cyan), var(--lime));
+  -webkit-background-clip: text; -webkit-text-fill-color: transparent;
+  line-height: 1;
+}
+.common-hero .hero-text h2 { font-size: 16px; font-weight: 700; color: #fff; }
+.common-hero .hero-text p  { font-size: 12px; color: var(--muted); margin-top: 3px; }
+.common-note {
+  font-size: 11px; color: var(--muted);
+  background: rgba(255,215,0,0.06); border: 1px solid rgba(255,215,0,0.18);
+  border-radius: 6px; padding: 8px 13px; margin-left: auto;
+  max-width: 340px; line-height: 1.6;
+}
+.common-note strong { color: var(--gold); }
+.dual-chart-btn {
+  background: none; border: 1px solid var(--border); color: var(--muted);
+  padding: 1px 6px; border-radius: 4px; cursor: pointer; font-size: 10px; transition: all 0.14s;
+  margin-right: 2px;
+}
+.dual-chart-btn.sepa-c:hover { border-color: var(--cyan); color: var(--cyan); }
+.dual-chart-btn.vcp-c:hover  { border-color: var(--gold); color: var(--gold); }
+
+/* ── Scrollbar ───────────────────────────────────────────────────────────────── */
 ::-webkit-scrollbar { width: 5px; height: 5px; }
 ::-webkit-scrollbar-track { background: var(--bg); }
 ::-webkit-scrollbar-thumb { background: var(--border); border-radius: 3px; }
@@ -274,333 +303,674 @@ tbody td { padding: 9px 13px; white-space: nowrap; }
 <!-- ── Header ──────────────────────────────────────────────────────────────── -->
 <header>
   <div class="logo">S</div>
-  <div class="header-text">
-    <h1>SEPA Scanner</h1>
-    <p>Minervini Trend Template &nbsp;·&nbsp; NSE Nifty 500</p>
+  <div class="hdr-text">
+    <h1>Minervini Scanner</h1>
+    <p>SEPA Trend Template &nbsp;·&nbsp; VCP Setup Scanner &nbsp;·&nbsp; NSE Nifty 500</p>
   </div>
-  <div class="header-meta" id="last-scan-meta"></div>
+  <div class="hdr-meta" id="hdr-meta"></div>
 </header>
 
-<!-- ── Main ────────────────────────────────────────────────────────────────── -->
+<!-- ── Tab nav ─────────────────────────────────────────────────────────────── -->
+<div class="tab-nav">
+  <button class="tab-btn active" onclick="switchTab('sepa')" id="btn-sepa">
+    📈 SEPA Scanner
+    <span class="badge-tab" id="sepa-tab-count">0</span>
+  </button>
+  <button class="tab-btn" onclick="switchTab('vcp')" id="btn-vcp">
+    🔥 VCP Scanner
+    <span class="badge-tab" id="vcp-tab-count">0</span>
+  </button>
+  <button class="tab-btn" onclick="switchTab('common')" id="btn-common">
+    🎯 Both Filters
+    <span class="badge-tab" id="common-tab-count">0</span>
+  </button>
+</div>
+
+<!-- ══════════════════════════ MAIN ══════════════════════════════════════════ -->
 <main>
 
-  <!-- Scan control card -->
-  <div class="card">
-    <div class="card-header">
-      <span class="card-title">Scan Controls</span>
-    </div>
-    <div class="card-body">
+<!-- ════════════ SEPA TAB ════════════ -->
+<div class="tab-panel active" id="tab-sepa">
 
+  <!-- Control card -->
+  <div class="card">
+    <div class="card-hdr"><span class="card-title">SEPA Trend Template Scanner</span></div>
+    <div class="card-body">
       <div class="stats-row">
-        <button class="btn btn-primary" id="scan-btn" onclick="startScan()">
-          ▶&ensp;Run Full Scan
+        <button class="btn btn-primary" id="sepa-scan-btn" onclick="sepaStart()">
+          ▶&ensp;Run SEPA Scan
         </button>
-        <button class="btn btn-outline" id="export-btn" onclick="exportCSV()" disabled>
+        <button class="btn btn-outline" id="sepa-export-btn" onclick="sepaExport()" disabled>
           ↓&ensp;Export CSV
         </button>
-
         <div class="stat-box">
           <div class="lbl">Nifty 500 12m Return</div>
-          <div class="val gold" id="bench-val">—</div>
+          <div class="val gold" id="sepa-bench">—</div>
         </div>
         <div class="stat-box">
           <div class="lbl">Tickers Scanned</div>
-          <div class="val" id="stat-scanned">0 / 500</div>
+          <div class="val" id="sepa-scanned">0 / 500</div>
         </div>
         <div class="stat-box">
           <div class="lbl">SEPA Passed</div>
-          <div class="val lime" id="stat-passed">0</div>
+          <div class="val lime" id="sepa-passed">0</div>
         </div>
       </div>
 
-      <!-- Progress bar -->
-      <div class="progress-wrap" id="prog-wrap">
-        <div class="progress-meta">
-          <span id="prog-label">Scanning…</span>
-          <span id="prog-pct">0%</span>
+      <div class="prog-wrap" id="sepa-prog-wrap">
+        <div class="prog-meta">
+          <span id="sepa-prog-label">Scanning…</span>
+          <span id="sepa-prog-pct">0%</span>
         </div>
-        <div class="progress-track">
-          <div class="progress-fill pulse" id="prog-fill"></div>
+        <div class="prog-track">
+          <div class="prog-fill sepa-fill pulse" id="sepa-prog-fill"></div>
         </div>
-        <div class="progress-ticker">
-          Processing: <strong id="prog-ticker">—</strong>
-        </div>
+        <div class="prog-ticker">Processing: <strong id="sepa-prog-ticker">—</strong></div>
       </div>
 
-      <!-- Activity log -->
-      <div class="log-wrap" id="log-wrap">
-        <div class="log-box" id="log-box"></div>
+      <div class="log-wrap" id="sepa-log-wrap">
+        <div class="log-box" id="sepa-log-box"></div>
       </div>
-
     </div>
   </div>
 
   <!-- Results card -->
   <div class="card">
-    <div class="card-header">
+    <div class="card-hdr">
       <span class="card-title">SEPA Signal Results</span>
-      <span class="badge" id="result-badge">0 stocks</span>
-      <div class="toolbar-hint">Click a column header to sort &nbsp;·&nbsp; Click a ticker to view chart</div>
+      <span class="badge" id="sepa-result-badge">0 stocks</span>
+      <div class="tbl-hint">Click column header to sort &nbsp;·&nbsp; Click ticker for chart</div>
     </div>
-    <div id="results-area">
-      <div class="empty-state">
+    <div id="sepa-results-area">
+      <div class="empty">
         <div class="empty-icon">📊</div>
         <h3>No results yet</h3>
-        <p>Press <strong>Run Full Scan</strong> to scan all 500 Nifty stocks.<br>
-           The scan checks all 8 Minervini SEPA conditions and takes ~10–15 minutes.</p>
+        <p>Run a SEPA scan — all 8 Minervini trend-template conditions must pass.<br>
+           Scans ~500 stocks and takes 10–15 minutes.</p>
       </div>
     </div>
   </div>
 
+</div><!-- /tab-sepa -->
+
+
+<!-- ════════════ VCP TAB ════════════ -->
+<div class="tab-panel" id="tab-vcp">
+
+  <!-- Info box -->
+  <div class="vcp-info">
+    <strong>VCP (Volatility Contraction Pattern)</strong> — Mark Minervini's high-tight setup.
+    The scanner looks for stocks in an uptrend with 2+ progressively tighter price contractions,
+    drying-up volume, and price near the <strong>pivot</strong> (last swing high).
+    Each contraction must be ≤ 82% of the previous range. The final contraction must be ≤ 25%.
+    &nbsp;|&nbsp; <strong>Entry:</strong> buy the pivot breakout on volume.
+    &nbsp;|&nbsp; <strong>Stop:</strong> last swing low.
+    &nbsp;|&nbsp; <strong>Targets:</strong> +20% / +35% / +50%.
+    &nbsp;|&nbsp; Position sized for 1% risk on ₹5 Lakh capital.
+  </div>
+
+  <!-- Control card -->
+  <div class="card">
+    <div class="card-hdr"><span class="card-title">VCP Setup Scanner</span></div>
+    <div class="card-body">
+      <div class="stats-row">
+        <button class="btn btn-vcp" id="vcp-scan-btn" onclick="vcpStart()">
+          🔥&ensp;Run VCP Scan
+        </button>
+        <button class="btn btn-outline" id="vcp-export-btn" onclick="vcpExport()" disabled>
+          ↓&ensp;Export CSV
+        </button>
+        <div class="stat-box">
+          <div class="lbl">Nifty 500 12m Return</div>
+          <div class="val gold" id="vcp-bench">—</div>
+        </div>
+        <div class="stat-box">
+          <div class="lbl">Tickers Scanned</div>
+          <div class="val" id="vcp-scanned">0 / 500</div>
+        </div>
+        <div class="stat-box">
+          <div class="lbl">VCP Setups Found</div>
+          <div class="val lime" id="vcp-passed">0</div>
+        </div>
+      </div>
+
+      <div class="prog-wrap" id="vcp-prog-wrap">
+        <div class="prog-meta">
+          <span id="vcp-prog-label">Scanning…</span>
+          <span id="vcp-prog-pct">0%</span>
+        </div>
+        <div class="prog-track">
+          <div class="prog-fill vcp-fill pulse" id="vcp-prog-fill"></div>
+        </div>
+        <div class="prog-ticker">Processing: <strong id="vcp-prog-ticker">—</strong></div>
+      </div>
+
+      <div class="log-wrap" id="vcp-log-wrap">
+        <div class="log-box" id="vcp-log-box"></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Results card -->
+  <div class="card">
+    <div class="card-hdr">
+      <span class="card-title">VCP Setup Results</span>
+      <span class="badge" id="vcp-result-badge">0 setups</span>
+      <div class="tbl-hint">Sorted by VCP Score &nbsp;·&nbsp; Click ticker for chart with all levels</div>
+    </div>
+    <div id="vcp-results-area">
+      <div class="empty">
+        <div class="empty-icon">🔥</div>
+        <h3>No setups yet</h3>
+        <p>Run a VCP scan to detect Volatility Contraction Patterns across Nifty 500.<br>
+           Looks for 2–4 tightening contractions with volume dry-up.</p>
+      </div>
+    </div>
+  </div>
+
+</div><!-- /tab-vcp -->
+
+
+<!-- ════════════ COMMON TAB ════════════ -->
+<div class="tab-panel" id="tab-common">
+
+  <div class="common-hero">
+    <div class="big-num" id="common-count">0</div>
+    <div class="hero-text">
+      <h2>Stocks passing both SEPA &amp; VCP filters</h2>
+      <p>These are the highest-conviction setups — strong trend <em>and</em> tight VCP base forming.</p>
+    </div>
+    <div class="common-note">
+      <strong>How to use:</strong> Stocks here satisfied all 8 SEPA trend-template
+      conditions <em>and</em> show a valid VCP contraction pattern. Run both scans
+      first, then check back here.
+    </div>
+  </div>
+
+  <div class="card">
+    <div class="card-hdr">
+      <span class="card-title">Highest-Conviction Setups</span>
+      <span class="badge" id="common-badge">0 stocks</span>
+      <div class="tbl-hint">SEPA chart = trend view &nbsp;·&nbsp; VCP chart = pattern + levels</div>
+    </div>
+    <div id="common-results-area">
+      <div class="empty">
+        <div class="empty-icon">🎯</div>
+        <h3>Run both scans first</h3>
+        <p>Once the SEPA scan and the VCP scan are both complete,<br>
+           this tab will show stocks that passed every filter.</p>
+      </div>
+    </div>
+  </div>
+
+</div><!-- /tab-common -->
+
 </main>
 
-<!-- Chart Modal -->
-<div class="overlay" id="overlay" onclick="maybeClose(event)">
+<!-- ── Chart modal (shared) ─────────────────────────────────────────────────── -->
+<div class="overlay" id="overlay" onclick="maybeCls(event)">
   <div class="modal">
     <div class="modal-hd">
       <div class="modal-hd-title" id="modal-title">Chart</div>
       <button class="modal-close" onclick="closeModal()">×</button>
     </div>
     <div class="modal-bd" id="modal-bd">
-      <div class="modal-loading">Loading chart…</div>
+      <div class="modal-loading">Loading…</div>
     </div>
   </div>
 </div>
 
+<!-- ══════════════════════════ SCRIPT ════════════════════════════════════════ -->
 <script>
-// ── Column definitions ────────────────────────────────────────────────────────
-const COLS = [
-  { key: "Ticker",        label: "Ticker",          fmt: null },
-  { key: "Last_Close",    label: "Price (₹)",        fmt: v => fmtINR(v) },
-  { key: "SMA_50",        label: "SMA 50",           fmt: v => fmtINR(v) },
-  { key: "SMA_150",       label: "SMA 150",          fmt: v => fmtINR(v) },
-  { key: "SMA_200",       label: "SMA 200",          fmt: v => fmtINR(v) },
-  { key: "SMA_200_Slope", label: "SMA 200 Slope",    fmt: v => `${v>=0?'+':''}${v.toFixed(2)}` },
-  { key: "52w_High",      label: "52w High",         fmt: v => fmtINR(v) },
-  { key: "52w_Low",       label: "52w Low",          fmt: v => fmtINR(v) },
-  { key: "Pct_From_High", label: "% from High",      fmt: v => `${v.toFixed(2)}%` },
-  { key: "Pct_From_Low",  label: "% from Low",       fmt: v => `+${v.toFixed(2)}%` },
-  { key: "HighLow_Ratio", label: "H/L Ratio",        fmt: v => v.toFixed(3) },
-  { key: "RS_vs_Nifty",   label: "RS vs Nifty",      fmt: v => `${v>=0?'+':''}${v.toFixed(2)}%` },
-  { key: "Vol_Ratio",     label: "Vol ×",            fmt: v => v != null ? `${v.toFixed(2)}×` : '—' },
-];
+// ── Tab switching ─────────────────────────────────────────────────────────────
+function switchTab(name) {
+  ['sepa','vcp','common'].forEach(t => {
+    document.getElementById('btn-' + t).classList.toggle('active', t === name);
+    document.getElementById('tab-' + t).classList.toggle('active', t === name);
+  });
+  if (name === 'common') updateCommon();
+}
 
+// ── Helpers ───────────────────────────────────────────────────────────────────
 function fmtINR(v) {
   return '₹' + v.toLocaleString('en-IN', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
 }
-
-// ── State ─────────────────────────────────────────────────────────────────────
-let pollTimer  = null;
-let sortCol    = "RS_vs_Nifty";
-let sortDir    = "desc";
-let allResults = [];
-
-// ── Start scan ────────────────────────────────────────────────────────────────
-async function startScan() {
-  const btn = document.getElementById('scan-btn');
-  btn.disabled = true;
-
-  const res = await fetch('/api/scan/start', { method: 'POST' });
-  if (!res.ok) {
-    const d = await res.json().catch(() => ({}));
-    alert(d.error || 'Could not start scan.');
-    btn.disabled = false;
-    return;
-  }
-
-  // Reset UI
-  allResults = [];
-  document.getElementById('stat-scanned').textContent = '0 / 500';
-  document.getElementById('stat-passed').textContent  = '0';
-  document.getElementById('result-badge').textContent = '0 stocks';
-  document.getElementById('bench-val').textContent    = '—';
-  document.getElementById('log-box').innerHTML        = '';
-  showEmpty();
-
-  show('prog-wrap');
-  show('log-wrap');
-
-  const fill = document.getElementById('prog-fill');
-  fill.style.width = '0%';
-  fill.classList.add('pulse');
-
-  pollTimer = setInterval(poll, 2000);
+function esc(s) {
+  return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
 }
+function escA(s) { return String(s).replace(/"/g,'&quot;'); }
+function showEl(id) { document.getElementById(id).classList.add('show'); }
 
-// ── Poll progress ─────────────────────────────────────────────────────────────
-async function poll() {
-  try {
-    const res  = await fetch('/api/scan/progress');
-    const data = await res.json();
-    applyUpdate(data);
-
-    if (!data.running && data.completed) {
-      clearInterval(pollTimer);
-      pollTimer = null;
-      document.getElementById('scan-btn').disabled = false;
-      document.getElementById('prog-fill').classList.remove('pulse');
-
-      if (data.results.length) {
-        document.getElementById('export-btn').disabled = false;
-      }
-      if (data.completed_at) {
-        const t = new Date(data.completed_at);
-        document.getElementById('last-scan-meta').textContent =
-          'Last scan: ' + t.toLocaleDateString('en-IN') + ' ' + t.toLocaleTimeString('en-IN');
-      }
-    }
-  } catch (e) {
-    console.error('Poll error', e);
-  }
-}
-
-// ── Apply progress data ───────────────────────────────────────────────────────
-function applyUpdate(data) {
-  const pct = data.total > 0 ? Math.round(data.current_idx / data.total * 100) : 0;
-
-  document.getElementById('prog-fill').style.width    = pct + '%';
-  document.getElementById('prog-pct').textContent     = pct + '%';
-  document.getElementById('prog-label').textContent   = data.running ? 'Scanning…' : (data.error ? '⚠ Error' : 'Complete ✓');
-  document.getElementById('prog-ticker').textContent  = data.current_ticker || '—';
-  document.getElementById('stat-scanned').textContent = `${data.current_idx} / ${data.total}`;
-  document.getElementById('stat-passed').textContent  = data.passed;
-  document.getElementById('result-badge').textContent = `${data.passed} stock${data.passed !== 1 ? 's' : ''}`;
-
-  if (data.benchmark_return != null) {
-    const br = data.benchmark_return;
-    document.getElementById('bench-val').textContent = (br >= 0 ? '+' : '') + br.toFixed(2) + '%';
-  }
-
-  // Log
-  if (data.log && data.log.length) {
-    const logBox = document.getElementById('log-box');
-    logBox.innerHTML = data.log.slice().reverse().map(line => {
-      let cls = 'log-line';
-      if (line.startsWith('PASS'))  cls += ' pass';
-      else if (line.startsWith('ERROR')) cls += ' error';
-      else if (line.startsWith('Benchmark') || line.startsWith('Scan complete')) cls += ' bench';
-      return `<div class="${cls}">${escHtml(line)}</div>`;
-    }).join('');
-  }
-
-  // Table — only re-render when result count changes
-  if (data.results.length !== allResults.length) {
-    allResults = data.results;
-    renderTable();
-  }
-}
-
-// ── Table rendering ───────────────────────────────────────────────────────────
-function renderTable() {
-  const area = document.getElementById('results-area');
-  if (!allResults.length) { showEmpty(); return; }
-
-  const sorted = [...allResults].sort((a, b) => {
-    const va = a[sortCol], vb = b[sortCol];
-    if (va == null && vb == null) return 0;
-    if (va == null) return 1;
-    if (vb == null) return -1;
-    if (typeof va === 'string') return sortDir === 'asc' ? va.localeCompare(vb) : vb.localeCompare(va);
-    return sortDir === 'asc' ? va - vb : vb - va;
-  });
-
-  let html = `<div class="table-wrap"><table><thead><tr>`;
-  COLS.forEach(c => {
-    const cls = c.key === sortCol ? (sortDir === 'asc' ? 'sorted-asc' : 'sorted-desc') : '';
-    html += `<th class="${cls}" onclick="sortBy('${c.key}')">${c.label}</th>`;
-  });
-  html += `</tr></thead><tbody>`;
-
-  sorted.forEach(row => {
-    html += `<tr>`;
-    COLS.forEach(c => {
-      if (c.key === 'Ticker') {
-        html += `<td><div class="ticker-cell">
-          <span class="ticker-name" onclick="openChart('${escAttr(row.Ticker)}')">${escHtml(row.Ticker)}</span>
-          <button class="chart-btn" onclick="openChart('${escAttr(row.Ticker)}')">Chart</button>
-        </div></td>`;
-        return;
-      }
-      const val = row[c.key];
-      const txt = (val != null && c.fmt) ? c.fmt(val) : (val ?? '—');
-      let cls = '';
-      if (c.key === 'RS_vs_Nifty'   && val != null) cls = val >= 0 ? 'pos' : 'neg';
-      if (c.key === 'SMA_200_Slope' && val != null) cls = val >= 0 ? 'pos' : 'neg';
-      if (c.key === 'Pct_From_High') cls = 'neg';
-      if (c.key === 'Pct_From_Low')  cls = 'pos';
-      if (c.key === 'Vol_Ratio' && val != null) cls = val >= 1.5 ? 'pos' : '';
-      html += `<td class="${cls}">${txt}</td>`;
-    });
-    html += `</tr>`;
-  });
-
-  html += `</tbody></table></div>`;
-  area.innerHTML = html;
-}
-
-function sortBy(col) {
-  sortDir = sortCol === col ? (sortDir === 'asc' ? 'desc' : 'asc') : (col === 'Ticker' ? 'asc' : 'desc');
-  sortCol = col;
-  renderTable();
-}
-
-function showEmpty() {
-  document.getElementById('results-area').innerHTML = `
-    <div class="empty-state">
-      <div class="empty-icon">📊</div>
-      <h3>No results yet</h3>
-      <p>Press <strong>Run Full Scan</strong> to scan all 500 Nifty stocks.<br>
-         The scan checks all 8 Minervini SEPA conditions and takes ~10–15 minutes.</p>
-    </div>`;
-}
-
-// ── Chart modal ───────────────────────────────────────────────────────────────
-function openChart(ticker) {
-  document.getElementById('modal-title').textContent = ticker + ' — SEPA Chart';
+// ── Modal ─────────────────────────────────────────────────────────────────────
+function openChart(ticker, api) {
+  document.getElementById('modal-title').textContent = ticker + ' — Chart';
   document.getElementById('modal-bd').innerHTML = '<div class="modal-loading">Loading chart…</div>';
   document.getElementById('overlay').classList.add('open');
   document.getElementById('modal-bd').innerHTML =
-    `<img src="/api/chart/${encodeURIComponent(ticker)}" alt="${escAttr(ticker)} chart"
+    `<img src="${api}/${encodeURIComponent(ticker)}" alt="${escA(ticker)}"
       onerror="this.parentElement.innerHTML='<div class=modal-loading>Chart not available — run a scan first.</div>'"
     />`;
 }
-
 function closeModal() { document.getElementById('overlay').classList.remove('open'); }
-function maybeClose(e) { if (e.target.id === 'overlay') closeModal(); }
+function maybeCls(e)  { if (e.target.id === 'overlay') closeModal(); }
 document.addEventListener('keydown', e => { if (e.key === 'Escape') closeModal(); });
 
-// ── CSV export ────────────────────────────────────────────────────────────────
-function exportCSV() { window.location.href = '/api/export/csv'; }
 
-// ── Helpers ───────────────────────────────────────────────────────────────────
-function show(id) { document.getElementById(id).classList.add('show'); }
-function escHtml(s) {
-  return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
+// ══════════════════════════════════════════════════════════════════════════════
+// SEPA SCANNER
+// ══════════════════════════════════════════════════════════════════════════════
+const SEPA_COLS = [
+  { key:'Ticker',        label:'Ticker',        fmt:null },
+  { key:'Last_Close',    label:'Price (₹)',      fmt:v=>fmtINR(v) },
+  { key:'SMA_50',        label:'SMA 50',         fmt:v=>fmtINR(v) },
+  { key:'SMA_150',       label:'SMA 150',        fmt:v=>fmtINR(v) },
+  { key:'SMA_200',       label:'SMA 200',        fmt:v=>fmtINR(v) },
+  { key:'SMA_200_Slope', label:'SMA200 Slope',   fmt:v=>(v>=0?'+':'')+v.toFixed(2) },
+  { key:'52w_High',      label:'52w High',       fmt:v=>fmtINR(v) },
+  { key:'52w_Low',       label:'52w Low',        fmt:v=>fmtINR(v) },
+  { key:'Pct_From_High', label:'% from High',    fmt:v=>v.toFixed(2)+'%' },
+  { key:'Pct_From_Low',  label:'% from Low',     fmt:v=>'+'+v.toFixed(2)+'%' },
+  { key:'HighLow_Ratio', label:'H/L Ratio',      fmt:v=>v.toFixed(3) },
+  { key:'RS_vs_Nifty',   label:'RS vs Nifty',    fmt:v=>(v>=0?'+':'')+v.toFixed(2)+'%' },
+  { key:'Vol_Ratio',     label:'Vol ×',          fmt:v=>v!=null?v.toFixed(2)+'×':'—' },
+];
+
+let sepaTimer = null, sepaSort = 'RS_vs_Nifty', sepaDir = 'desc', sepaRows = [];
+
+async function sepaStart() {
+  const btn = document.getElementById('sepa-scan-btn');
+  btn.disabled = true;
+  const r = await fetch('/api/scan/start', { method:'POST' });
+  if (!r.ok) { alert((await r.json().catch(()=>({}))).error||'Error'); btn.disabled=false; return; }
+  sepaRows = [];
+  sepaReset();
+  showEl('sepa-prog-wrap'); showEl('sepa-log-wrap');
+  document.getElementById('sepa-log-box').innerHTML = '';
+  document.getElementById('sepa-prog-fill').style.width = '0%';
+  document.getElementById('sepa-prog-fill').classList.add('pulse');
+  sepaTimer = setInterval(sepaPoll, 2000);
 }
-function escAttr(s) { return String(s).replace(/"/g, '&quot;'); }
 
-// ── On load: check if a scan is already running / has results ─────────────────
+function sepaReset() {
+  document.getElementById('sepa-scanned').textContent = '0 / 500';
+  document.getElementById('sepa-passed').textContent  = '0';
+  document.getElementById('sepa-result-badge').textContent = '0 stocks';
+  document.getElementById('sepa-tab-count').textContent    = '0';
+  document.getElementById('sepa-bench').textContent = '—';
+  sepaShowEmpty();
+}
+
+async function sepaPoll() {
+  const data = await fetch('/api/scan/progress').then(r=>r.json()).catch(()=>null);
+  if (!data) return;
+  sepaApply(data);
+  if (!data.running && data.completed) {
+    clearInterval(sepaTimer); sepaTimer = null;
+    document.getElementById('sepa-scan-btn').disabled = false;
+    document.getElementById('sepa-prog-fill').classList.remove('pulse');
+    if (data.results.length) document.getElementById('sepa-export-btn').disabled = false;
+    if (data.completed_at) {
+      const t = new Date(data.completed_at);
+      document.getElementById('hdr-meta').textContent =
+        'SEPA: ' + t.toLocaleDateString('en-IN') + ' ' + t.toLocaleTimeString('en-IN');
+    }
+  }
+}
+
+function sepaApply(data) {
+  const pct = data.total > 0 ? Math.round(data.current_idx/data.total*100) : 0;
+  document.getElementById('sepa-prog-fill').style.width  = pct + '%';
+  document.getElementById('sepa-prog-pct').textContent   = pct + '%';
+  document.getElementById('sepa-prog-label').textContent = data.running ? 'Scanning…' : (data.error ? '⚠ Error' : 'Complete ✓');
+  document.getElementById('sepa-prog-ticker').textContent = data.current_ticker || '—';
+  document.getElementById('sepa-scanned').textContent    = `${data.current_idx} / ${data.total}`;
+  document.getElementById('sepa-passed').textContent     = data.passed;
+  const cnt = data.passed;
+  document.getElementById('sepa-result-badge').textContent = `${cnt} stock${cnt!==1?'s':''}`;
+  document.getElementById('sepa-tab-count').textContent    = cnt;
+  if (data.benchmark_return!=null) {
+    const b=data.benchmark_return;
+    document.getElementById('sepa-bench').textContent = (b>=0?'+':'')+b.toFixed(2)+'%';
+  }
+  if (data.log && data.log.length) {
+    document.getElementById('sepa-log-box').innerHTML = data.log.slice().reverse().map(l=>{
+      let c='log-line';
+      if(l.startsWith('PASS'))c+=' pass'; else if(l.startsWith('ERROR'))c+=' error';
+      else if(l.startsWith('Benchmark')||l.startsWith('Scan'))c+=' bench';
+      return `<div class="${c}">${esc(l)}</div>`;
+    }).join('');
+  }
+  if (data.results.length !== sepaRows.length) {
+    sepaRows = data.results; sepaRenderTable(); updateCommon();
+  }
+}
+
+function sepaRenderTable() {
+  const area = document.getElementById('sepa-results-area');
+  if (!sepaRows.length) { sepaShowEmpty(); return; }
+  const sorted = [...sepaRows].sort((a,b)=>{
+    const va=a[sepaSort], vb=b[sepaSort];
+    if(va==null&&vb==null)return 0; if(va==null)return 1; if(vb==null)return -1;
+    if(typeof va==='string') return sepaDir==='asc'?va.localeCompare(vb):vb.localeCompare(va);
+    return sepaDir==='asc'?va-vb:vb-va;
+  });
+  let h = `<div class="tbl-wrap"><table><thead><tr>`;
+  SEPA_COLS.forEach(c=>{
+    const cls=c.key===sepaSort?(sepaDir==='asc'?'s-asc':'s-desc'):'';
+    h+=`<th class="${cls}" onclick="sepaSort_('${c.key}')">${c.label}</th>`;
+  });
+  h+=`</tr></thead><tbody>`;
+  sorted.forEach(row=>{
+    h+=`<tr>`;
+    SEPA_COLS.forEach(c=>{
+      if(c.key==='Ticker'){
+        h+=`<td><div class="tkr-cell">
+          <span class="tkr-name" onclick="openChart('${escA(row.Ticker)}','/api/chart')">${esc(row.Ticker)}</span>
+          <button class="chart-btn" onclick="openChart('${escA(row.Ticker)}','/api/chart')">Chart</button>
+        </div></td>`; return;
+      }
+      const v=row[c.key], txt=(v!=null&&c.fmt)?c.fmt(v):(v??'—');
+      let cls='';
+      if(c.key==='RS_vs_Nifty'&&v!=null)    cls=v>=0?'pos':'neg';
+      if(c.key==='SMA_200_Slope'&&v!=null)  cls=v>=0?'pos':'neg';
+      if(c.key==='Pct_From_High')           cls='neg';
+      if(c.key==='Pct_From_Low')            cls='pos';
+      h+=`<td class="${cls}">${txt}</td>`;
+    });
+    h+=`</tr>`;
+  });
+  h+=`</tbody></table></div>`;
+  area.innerHTML = h;
+}
+
+function sepaSort_(col) {
+  sepaDir = sepaSort===col?(sepaDir==='asc'?'desc':'asc'):(col==='Ticker'?'asc':'desc');
+  sepaSort = col; sepaRenderTable();
+}
+function sepaShowEmpty() {
+  document.getElementById('sepa-results-area').innerHTML = `<div class="empty">
+    <div class="empty-icon">📊</div><h3>No results yet</h3>
+    <p>Run a SEPA scan — all 8 Minervini conditions must pass.<br>Scans ~500 stocks, takes 10–15 minutes.</p>
+  </div>`;
+}
+function sepaExport() { window.location.href = '/api/export/csv'; }
+
+
+// ══════════════════════════════════════════════════════════════════════════════
+// VCP SCANNER
+// ══════════════════════════════════════════════════════════════════════════════
+const VCP_COLS = [
+  { key:'Ticker',          label:'Ticker',          fmt:null },
+  { key:'Last_Close',      label:'Price (₹)',        fmt:v=>fmtINR(v) },
+  { key:'VCP_Score',       label:'Score',            fmt:null },         // custom render
+  { key:'N_Contractions',  label:'C\'s',             fmt:v=>v },
+  { key:'Tightening_Pct',  label:'Tighten %',        fmt:v=>v+'%' },
+  { key:'Pivot',           label:'Pivot (₹)',        fmt:v=>fmtINR(v) },
+  { key:'Stop_Loss',       label:'Stop (₹)',         fmt:v=>fmtINR(v) },
+  { key:'Stop_Pct',        label:'Stop %',           fmt:v=>v+'%' },
+  { key:'RR_Ratio',        label:'R/R',              fmt:v=>v+'×' },
+  { key:'Target_1',        label:'T1 +20%',          fmt:v=>fmtINR(v) },
+  { key:'Target_2',        label:'T2 +35%',          fmt:v=>fmtINR(v) },
+  { key:'Target_3',        label:'T3 +50%',          fmt:v=>fmtINR(v) },
+  { key:'Shares_5L',       label:'Shares (5L)',      fmt:v=>v },
+  { key:'Capital_Risk_5L', label:'Risk (₹)',         fmt:v=>fmtINR(v) },
+  { key:'Vol_Declining',   label:'Vol ↓',            fmt:v=>v?'✓':'—' },
+  { key:'RS_vs_Nifty',     label:'RS vs Nifty',      fmt:v=>v!=null?(v>=0?'+':'')+v.toFixed(2)+'%':'—' },
+];
+
+let vcpTimer = null, vcpSortCol = 'VCP_Score', vcpSortDir = 'desc', vcpRows = [];
+
+async function vcpStart() {
+  const btn = document.getElementById('vcp-scan-btn');
+  btn.disabled = true;
+  const r = await fetch('/api/vcp/start', { method:'POST' });
+  if (!r.ok) { alert((await r.json().catch(()=>({}))).error||'Error'); btn.disabled=false; return; }
+  vcpRows = [];
+  vcpReset();
+  showEl('vcp-prog-wrap'); showEl('vcp-log-wrap');
+  document.getElementById('vcp-log-box').innerHTML = '';
+  document.getElementById('vcp-prog-fill').style.width = '0%';
+  document.getElementById('vcp-prog-fill').classList.add('pulse');
+  vcpTimer = setInterval(vcpPoll, 2000);
+}
+
+function vcpReset() {
+  document.getElementById('vcp-scanned').textContent = '0 / 500';
+  document.getElementById('vcp-passed').textContent  = '0';
+  document.getElementById('vcp-result-badge').textContent = '0 setups';
+  document.getElementById('vcp-tab-count').textContent    = '0';
+  document.getElementById('vcp-bench').textContent = '—';
+  vcpShowEmpty();
+}
+
+async function vcpPoll() {
+  const data = await fetch('/api/vcp/progress').then(r=>r.json()).catch(()=>null);
+  if (!data) return;
+  vcpApply(data);
+  if (!data.running && data.completed) {
+    clearInterval(vcpTimer); vcpTimer = null;
+    document.getElementById('vcp-scan-btn').disabled = false;
+    document.getElementById('vcp-prog-fill').classList.remove('pulse');
+    if (data.results.length) document.getElementById('vcp-export-btn').disabled = false;
+    if (data.completed_at) {
+      const t = new Date(data.completed_at);
+      document.getElementById('hdr-meta').textContent =
+        'VCP: ' + t.toLocaleDateString('en-IN') + ' ' + t.toLocaleTimeString('en-IN');
+    }
+  }
+}
+
+function vcpApply(data) {
+  const pct = data.total > 0 ? Math.round(data.current_idx/data.total*100) : 0;
+  document.getElementById('vcp-prog-fill').style.width  = pct + '%';
+  document.getElementById('vcp-prog-pct').textContent   = pct + '%';
+  document.getElementById('vcp-prog-label').textContent = data.running ? 'Scanning…' : (data.error ? '⚠ Error' : 'Complete ✓');
+  document.getElementById('vcp-prog-ticker').textContent = data.current_ticker || '—';
+  document.getElementById('vcp-scanned').textContent    = `${data.current_idx} / ${data.total}`;
+  document.getElementById('vcp-passed').textContent     = data.passed;
+  const cnt = data.passed;
+  document.getElementById('vcp-result-badge').textContent = `${cnt} setup${cnt!==1?'s':''}`;
+  document.getElementById('vcp-tab-count').textContent    = cnt;
+  if (data.benchmark_return!=null) {
+    const b=data.benchmark_return;
+    document.getElementById('vcp-bench').textContent = (b>=0?'+':'')+b.toFixed(2)+'%';
+  }
+  if (data.log && data.log.length) {
+    document.getElementById('vcp-log-box').innerHTML = data.log.slice().reverse().map(l=>{
+      let c='log-line';
+      if(l.startsWith('PASS'))c+=' pass'; else if(l.startsWith('ERROR'))c+=' error';
+      else if(l.startsWith('Benchmark')||l.startsWith('VCP scan'))c+=' bench';
+      return `<div class="${c}">${esc(l)}</div>`;
+    }).join('');
+  }
+  if (data.results.length !== vcpRows.length) {
+    vcpRows = data.results; vcpRenderTable(); updateCommon();
+  }
+}
+
+function vcpRenderTable() {
+  const area = document.getElementById('vcp-results-area');
+  if (!vcpRows.length) { vcpShowEmpty(); return; }
+
+  const sorted = [...vcpRows].sort((a,b)=>{
+    const va=a[vcpSortCol], vb=b[vcpSortCol];
+    if(va==null&&vb==null)return 0; if(va==null)return 1; if(vb==null)return -1;
+    if(typeof va==='string') return vcpSortDir==='asc'?va.localeCompare(vb):vb.localeCompare(va);
+    return vcpSortDir==='asc'?va-vb:vb-va;
+  });
+
+  let h = `<div class="tbl-wrap"><table><thead><tr>`;
+  VCP_COLS.forEach(c=>{
+    const cls=c.key===vcpSortCol?(vcpSortDir==='asc'?'s-asc':'s-desc'):'';
+    h+=`<th class="${cls}" onclick="vcpSortBy('${c.key}')">${c.label}</th>`;
+  });
+  h+=`</tr></thead><tbody>`;
+
+  sorted.forEach(row=>{
+    h+=`<tr>`;
+    VCP_COLS.forEach(c=>{
+      if (c.key==='Ticker') {
+        h+=`<td><div class="tkr-cell">
+          <span class="tkr-name" onclick="openChart('${escA(row.Ticker)}','/api/vcp/chart')">${esc(row.Ticker)}</span>
+          <button class="chart-btn" onclick="openChart('${escA(row.Ticker)}','/api/vcp/chart')">Chart</button>
+        </div></td>`; return;
+      }
+      if (c.key==='VCP_Score') {
+        const v=row.VCP_Score;
+        const cls=v>=75?'score-ex':v>=55?'score-gd':'score-ok';
+        h+=`<td><span class="score-pill ${cls}">${v}/100</span></td>`; return;
+      }
+      const v=row[c.key], txt=(v!=null&&c.fmt)?c.fmt(v):(v??'—');
+      let cls='';
+      if(c.key==='RS_vs_Nifty'&&v!=null) cls=v>=0?'pos':'neg';
+      if(c.key==='Stop_Pct')             cls='neg';
+      if(c.key==='Tightening_Pct')       cls='pos';
+      if(c.key==='RR_Ratio'&&v!=null)    cls=v>=2?'pos':'dim';
+      if(c.key==='Vol_Declining')        cls=row.Vol_Declining?'pos':'dim';
+      if(c.key==='N_Contractions')       cls='pos';
+      h+=`<td class="${cls}">${txt}</td>`;
+    });
+    h+=`</tr>`;
+  });
+
+  h+=`</tbody></table></div>`;
+  area.innerHTML = h;
+}
+
+function vcpSortBy(col) {
+  vcpSortDir = vcpSortCol===col?(vcpSortDir==='asc'?'desc':'asc'):(col==='Ticker'?'asc':'desc');
+  vcpSortCol = col; vcpRenderTable();
+}
+function vcpShowEmpty() {
+  document.getElementById('vcp-results-area').innerHTML = `<div class="empty">
+    <div class="empty-icon">🔥</div><h3>No setups yet</h3>
+    <p>Run a VCP scan to detect Volatility Contraction Patterns across Nifty 500.<br>
+       Looks for 2–4 tightening contractions with volume dry-up.</p>
+  </div>`;
+}
+function vcpExport() { window.location.href = '/api/vcp/export/csv'; }
+
+
+// ══════════════════════════════════════════════════════════════════════════════
+// COMMON — stocks passing both SEPA and VCP
+// ══════════════════════════════════════════════════════════════════════════════
+const COMMON_COLS = [
+  { key:'Ticker',         label:'Ticker' },
+  { key:'Last_Close',     label:'Price (₹)',      fmt:v=>fmtINR(v),                      src:'vcp' },
+  { key:'VCP_Score',      label:'VCP Score',       fmt:null,                              src:'vcp' },  // score pill
+  { key:'N_Contractions', label:'C\'s',            fmt:v=>v,                              src:'vcp' },
+  { key:'Tightening_Pct', label:'Tighten %',       fmt:v=>v+'%',                          src:'vcp' },
+  { key:'Pivot',          label:'Pivot (₹)',       fmt:v=>fmtINR(v),                      src:'vcp' },
+  { key:'Stop_Loss',      label:'Stop (₹)',        fmt:v=>fmtINR(v),                      src:'vcp' },
+  { key:'RR_Ratio',       label:'R/R',             fmt:v=>v+'×',                          src:'vcp' },
+  { key:'Target_1',       label:'T1 +20%',         fmt:v=>fmtINR(v),                      src:'vcp' },
+  { key:'RS_vs_Nifty',    label:'RS vs Nifty',     fmt:v=>v!=null?(v>=0?'+':'')+v.toFixed(2)+'%':'—', src:'sepa' },
+  { key:'SMA_200_Slope',  label:'SMA200 Slope',    fmt:v=>(v>=0?'+':'')+v.toFixed(2),     src:'sepa' },
+  { key:'Pct_From_High',  label:'% from 52w High', fmt:v=>v.toFixed(2)+'%',               src:'sepa' },
+  { key:'Vol_Declining',  label:'Vol ↓',           fmt:v=>v?'✓':'—',                      src:'vcp' },
+];
+
+function updateCommon() {
+  // Build a lookup from ticker → sepa row
+  const sepaMap = {};
+  sepaRows.forEach(r => { sepaMap[r.Ticker] = r; });
+
+  // Find VCP rows whose ticker also appears in SEPA
+  const common = vcpRows
+    .filter(r => sepaMap[r.Ticker])
+    .map(vcpRow => ({ ...sepaMap[vcpRow.Ticker], ...vcpRow })); // VCP fields win on conflict
+
+  const cnt = common.length;
+  document.getElementById('common-count').textContent     = cnt;
+  document.getElementById('common-badge').textContent     = `${cnt} stock${cnt!==1?'s':''}`;
+  document.getElementById('common-tab-count').textContent = cnt;
+
+  const area = document.getElementById('common-results-area');
+
+  if (!cnt) {
+    const bothDone = sepaRows.length > 0 && vcpRows.length > 0;
+    area.innerHTML = `<div class="empty">
+      <div class="empty-icon">🎯</div>
+      <h3>${bothDone ? 'No overlap found' : 'Run both scans first'}</h3>
+      <p>${bothDone
+        ? 'No stocks passed every SEPA condition <em>and</em> formed a valid VCP pattern simultaneously.'
+        : 'Once the SEPA scan and the VCP scan are both complete,<br>this tab will show stocks that passed every filter.'}</p>
+    </div>`;
+    return;
+  }
+
+  // Sort by VCP Score desc by default
+  common.sort((a,b) => (b.VCP_Score||0) - (a.VCP_Score||0));
+
+  let h = `<div class="tbl-wrap"><table><thead><tr>`;
+  COMMON_COLS.forEach(c => { h += `<th>${c.label}</th>`; });
+  h += `</tr></thead><tbody>`;
+
+  common.forEach(row => {
+    h += `<tr>`;
+    COMMON_COLS.forEach(c => {
+      if (c.key === 'Ticker') {
+        h += `<td><div class="tkr-cell">
+          <span class="tkr-name" onclick="openChart('${escA(row.Ticker)}','/api/chart')">${esc(row.Ticker)}</span>
+          <button class="dual-chart-btn sepa-c" onclick="openChart('${escA(row.Ticker)}','/api/chart')" title="SEPA chart">S</button>
+          <button class="dual-chart-btn vcp-c"  onclick="openChart('${escA(row.Ticker)}','/api/vcp/chart')" title="VCP chart">V</button>
+        </div></td>`; return;
+      }
+      if (c.key === 'VCP_Score') {
+        const v = row.VCP_Score;
+        const cls = v>=75?'score-ex':v>=55?'score-gd':'score-ok';
+        h += `<td><span class="score-pill ${cls}">${v}/100</span></td>`; return;
+      }
+      const v = row[c.key];
+      const txt = (v!=null && c.fmt) ? c.fmt(v) : (v??'—');
+      let cls = '';
+      if (c.key==='RS_vs_Nifty'   && v!=null) cls = v>=0?'pos':'neg';
+      if (c.key==='SMA_200_Slope' && v!=null) cls = v>=0?'pos':'neg';
+      if (c.key==='Pct_From_High')            cls = 'neg';
+      if (c.key==='Tightening_Pct')           cls = 'pos';
+      if (c.key==='RR_Ratio'      && v!=null) cls = v>=2?'pos':'dim';
+      if (c.key==='Vol_Declining')            cls = row.Vol_Declining?'pos':'dim';
+      if (c.key==='N_Contractions')           cls = 'pos';
+      h += `<td class="${cls}">${txt}</td>`;
+    });
+    h += `</tr>`;
+  });
+
+  h += `</tbody></table></div>`;
+  area.innerHTML = h;
+}
+
+// ── On load: hydrate state if server has existing data ────────────────────────
 (async () => {
   try {
-    const res  = await fetch('/api/scan/progress');
-    const data = await res.json();
-    if (data.results.length || data.running) {
-      show('prog-wrap');
-      show('log-wrap');
-      allResults = data.results;
-      applyUpdate(data);
-      if (data.running) {
-        document.getElementById('scan-btn').disabled = true;
-        document.getElementById('prog-fill').classList.add('pulse');
-        pollTimer = setInterval(poll, 2000);
-      } else if (data.results.length) {
-        document.getElementById('export-btn').disabled = false;
-        document.getElementById('prog-fill').classList.remove('pulse');
+    const [sd, vd] = await Promise.all([
+      fetch('/api/scan/progress').then(r=>r.json()),
+      fetch('/api/vcp/progress').then(r=>r.json()),
+    ]);
+
+    if (sd.results.length || sd.running) {
+      showEl('sepa-prog-wrap'); showEl('sepa-log-wrap');
+      sepaRows = sd.results; sepaApply(sd);
+      if (sd.running) {
+        document.getElementById('sepa-scan-btn').disabled = true;
+        document.getElementById('sepa-prog-fill').classList.add('pulse');
+        sepaTimer = setInterval(sepaPoll, 2000);
+      } else if (sd.results.length) {
+        document.getElementById('sepa-export-btn').disabled = false;
+        document.getElementById('sepa-prog-fill').classList.remove('pulse');
       }
-      if (data.completed_at) {
-        const t = new Date(data.completed_at);
-        document.getElementById('last-scan-meta').textContent =
-          'Last scan: ' + t.toLocaleDateString('en-IN') + ' ' + t.toLocaleTimeString('en-IN');
+    }
+
+    if (vd.results.length || vd.running) {
+      showEl('vcp-prog-wrap'); showEl('vcp-log-wrap');
+      vcpRows = vd.results; vcpApply(vd);
+      if (vd.running) {
+        document.getElementById('vcp-scan-btn').disabled = true;
+        document.getElementById('vcp-prog-fill').classList.add('pulse');
+        vcpTimer = setInterval(vcpPoll, 2000);
+      } else if (vd.results.length) {
+        document.getElementById('vcp-export-btn').disabled = false;
+        document.getElementById('vcp-prog-fill').classList.remove('pulse');
       }
     }
   } catch (_) {}

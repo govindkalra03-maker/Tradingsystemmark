@@ -1,5 +1,5 @@
 """
-SEPA Scanner Web Platform
+SEPA + VCP Scanner Web Platform
 Run:  python app.py
 Then open http://localhost:5001
 """
@@ -21,11 +21,14 @@ from indicators import calculate_indicators
 from plot import generate_chart
 from sepa_filter import check_sepa_conditions
 from tickers import NIFTY500
+from vcp_scanner import scan_ticker_vcp
+from vcp_plot import generate_vcp_chart
 
-BENCHMARK_TICKER = "^CRSLDX"
-OUTPUT_DIR = "output"
-CHARTS_DIR = os.path.join(OUTPUT_DIR, "charts")
-MIN_ROWS = 260
+BENCHMARK_TICKER  = "^CRSLDX"
+OUTPUT_DIR        = "output"
+CHARTS_DIR        = os.path.join(OUTPUT_DIR, "charts")
+VCP_CHARTS_DIR    = os.path.join(OUTPUT_DIR, "vcp_charts")
+MIN_ROWS          = 260
 
 app = Flask(__name__)
 
@@ -226,6 +229,183 @@ def export_csv():
         buf.getvalue(),
         mimetype="text/csv",
         headers={"Content-Disposition": f"attachment; filename=sepa_signals_{date_str}.csv"},
+    )
+
+
+# ═════════════════════════════════════════════════════════════════════════════
+# VCP SCANNER
+# ═════════════════════════════════════════════════════════════════════════════
+
+_vcp_state = {
+    "running":          False,
+    "current_idx":      0,
+    "current_ticker":   "",
+    "total":            len(NIFTY500),
+    "passed":           0,
+    "results":          [],
+    "log":              [],
+    "completed":        False,
+    "started_at":       None,
+    "completed_at":     None,
+    "benchmark_return": None,
+    "error":            None,
+}
+_vcp_lock = threading.Lock()
+
+
+def _vcp_log(msg):
+    with _vcp_lock:
+        _vcp_state["log"].append(msg)
+        if len(_vcp_state["log"]) > 60:
+            _vcp_state["log"] = _vcp_state["log"][-60:]
+
+
+def _bg_vcp_scan():
+    os.makedirs(OUTPUT_DIR, exist_ok=True)
+    os.makedirs(VCP_CHARTS_DIR, exist_ok=True)
+
+    with _vcp_lock:
+        _vcp_state.update({
+            "running":          True,
+            "current_idx":      0,
+            "current_ticker":   "Downloading benchmark…",
+            "passed":           0,
+            "results":          [],
+            "log":              [],
+            "completed":        False,
+            "started_at":       datetime.now().isoformat(),
+            "completed_at":     None,
+            "benchmark_return": None,
+            "error":            None,
+        })
+
+    # ── Benchmark ─────────────────────────────────────────────────────────────
+    df_b = _dl(BENCHMARK_TICKER)
+    if df_b is None or len(df_b) < 252:
+        with _vcp_lock:
+            _vcp_state["running"]   = False
+            _vcp_state["completed"] = True
+            _vcp_state["error"]     = "Could not download benchmark (^CRSLDX)"
+        return
+
+    close_b   = _squeeze(df_b["Close"]).astype(float).dropna()
+    bench_ret = float((close_b.iloc[-1] / close_b.iloc[-252]) - 1)
+
+    with _vcp_lock:
+        _vcp_state["benchmark_return"] = round(bench_ret * 100, 2)
+
+    _vcp_log(f"Benchmark ready — Nifty 500 12m return: {bench_ret:+.2%}")
+
+    # ── Ticker loop ───────────────────────────────────────────────────────────
+    for idx, ticker in enumerate(NIFTY500, 1):
+        with _vcp_lock:
+            _vcp_state["current_idx"]    = idx
+            _vcp_state["current_ticker"] = ticker
+
+        try:
+            df = _dl(ticker)
+            if df is None or len(df) < MIN_ROWS:
+                _vcp_log(f"SKIP  {ticker}  (insufficient data)")
+                continue
+
+            result = scan_ticker_vcp(ticker, df, bench_ret)
+
+            if result is None:
+                _vcp_log(f"FAIL  {ticker}")
+                continue
+
+            # Generate chart before stripping _seq
+            try:
+                safe = (ticker.replace(".NS", "")
+                              .replace("&", "_")
+                              .replace("-", "_"))
+                generate_vcp_chart(
+                    ticker, df, result,
+                    os.path.join(VCP_CHARTS_DIR, f"{safe}.png"),
+                )
+            except Exception:
+                pass
+
+            # Strip internal-only key before storing
+            row = {k: v for k, v in result.items() if k != "_seq"}
+
+            with _vcp_lock:
+                _vcp_state["results"].append(row)
+                _vcp_state["passed"] += 1
+
+            _vcp_log(
+                f"PASS  {ticker}  ✓  "
+                f"Score={result['VCP_Score']}  "
+                f"C={result['N_Contractions']}  "
+                f"R/R={result['RR_Ratio']}×"
+            )
+
+        except Exception as e:
+            _vcp_log(f"ERROR {ticker}  ({e})")
+
+    with _vcp_lock:
+        _vcp_state["running"]      = False
+        _vcp_state["completed"]    = True
+        _vcp_state["completed_at"] = datetime.now().isoformat()
+
+    _vcp_log(
+        f"VCP scan complete — "
+        f"{_vcp_state['passed']} / {len(NIFTY500)} setups found"
+    )
+
+
+# ── VCP routes ────────────────────────────────────────────────────────────────
+
+@app.route("/api/vcp/start", methods=["POST"])
+def vcp_start():
+    with _vcp_lock:
+        if _vcp_state["running"]:
+            return jsonify({"error": "VCP scan already running"}), 400
+    threading.Thread(target=_bg_vcp_scan, daemon=True).start()
+    return jsonify({"status": "started"})
+
+
+@app.route("/api/vcp/progress")
+def vcp_progress():
+    with _vcp_lock:
+        data = {k: v for k, v in _vcp_state.items() if k != "log"}
+        data["log"] = list(_vcp_state["log"])
+    return jsonify(data)
+
+
+@app.route("/api/vcp/chart/<path:ticker>")
+def vcp_chart(ticker):
+    safe = (ticker.replace(".NS", "")
+                  .replace("&", "_")
+                  .replace("-", "_"))
+    path = os.path.join(VCP_CHARTS_DIR, f"{safe}.png")
+    if not os.path.exists(path):
+        return jsonify({"error": "Chart not found"}), 404
+    return send_file(path, mimetype="image/png")
+
+
+@app.route("/api/vcp/export/csv")
+def vcp_export_csv():
+    with _vcp_lock:
+        results = list(_vcp_state["results"])
+    if not results:
+        return jsonify({"error": "No VCP results to export"}), 404
+
+    buf = io.StringIO()
+    skip = {"TickerFull", "_seq"}
+    export_keys = [k for k in results[0].keys() if k not in skip]
+    writer = csv.DictWriter(buf, fieldnames=export_keys, extrasaction="ignore")
+    writer.writeheader()
+    writer.writerows(results)
+
+    date_str = datetime.now().strftime("%Y-%m-%d")
+    return Response(
+        buf.getvalue(),
+        mimetype="text/csv",
+        headers={
+            "Content-Disposition":
+                f"attachment; filename=vcp_signals_{date_str}.csv"
+        },
     )
 
 
