@@ -296,6 +296,93 @@ tbody td { padding: 8px 12px; white-space: nowrap; }
 ::-webkit-scrollbar-track { background: var(--bg); }
 ::-webkit-scrollbar-thumb { background: var(--border); border-radius: 3px; }
 ::-webkit-scrollbar-thumb:hover { background: #2e2e55; }
+
+/* ── Backtest tab ──────────────────────────────────────────────────────────── */
+.bt-layout { display: flex; gap: 18px; align-items: flex-start; }
+.bt-sidebar {
+  width: 300px; flex-shrink: 0;
+  display: flex; flex-direction: column; gap: 14px;
+}
+.bt-main { flex: 1; min-width: 0; display: flex; flex-direction: column; gap: 18px; }
+
+/* param groups */
+.param-group { display: flex; flex-direction: column; gap: 9px; }
+.param-row { display: flex; flex-direction: column; gap: 3px; }
+.param-label {
+  font-size: 11px; color: var(--muted);
+  display: flex; justify-content: space-between;
+}
+.param-label span { color: var(--cyan); font-weight: 700; }
+.param-input {
+  background: var(--bg); border: 1px solid var(--border);
+  border-radius: 6px; color: var(--text);
+  padding: 6px 10px; font-size: 12px; width: 100%;
+}
+.param-input:focus { outline: none; border-color: var(--cyan); }
+input[type=range].param-input { padding: 4px 0; }
+
+/* metric cards */
+.metric-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 10px; }
+.metric-card {
+  background: var(--bg); border: 1px solid var(--border);
+  border-radius: 10px; padding: 12px 14px;
+}
+.metric-card .mc-lbl { font-size: 10px; color: var(--muted); text-transform: uppercase; letter-spacing: 0.6px; margin-bottom: 4px; }
+.metric-card .mc-val { font-size: 22px; font-weight: 800; }
+.metric-card .mc-sub { font-size: 10px; color: var(--muted); margin-top: 2px; }
+.mc-pos { color: var(--lime); }
+.mc-neg { color: var(--red); }
+.mc-neu { color: var(--cyan); }
+
+/* chart containers */
+.bt-chart { width: 100%; height: 340px; }
+.bt-chart-lg { width: 100%; height: 420px; }
+
+/* trade log badges */
+.exit-badge {
+  display: inline-block; padding: 1px 8px; border-radius: 99px;
+  font-size: 10px; font-weight: 700;
+}
+.eb-stop    { background: rgba(255,69,69,0.18);  color: var(--red); }
+.eb-time    { background: rgba(255,140,0,0.18);  color: var(--orange); }
+.eb-t1      { background: rgba(69,255,136,0.14); color: #45dd78; }
+.eb-t2      { background: rgba(69,255,136,0.22); color: var(--lime); }
+.eb-t3      { background: rgba(69,255,136,0.34); color: #00ff66; }
+.eb-trail   { background: rgba(0,212,255,0.15);  color: var(--cyan); }
+.eb-eob     { background: rgba(102,103,160,0.2); color: var(--muted); }
+
+/* toggle switch */
+.toggle-row { display: flex; align-items: center; gap: 8px; font-size: 12px; color: var(--muted); }
+.toggle-row input[type=checkbox] { accent-color: var(--cyan); width: 16px; height: 16px; cursor: pointer; }
+
+/* optimiser section */
+.opt-section { display: none; }
+.opt-section.show { display: block; }
+
+/* button variants */
+.btn-green {
+  background: linear-gradient(135deg, var(--lime), #28b860);
+  color: #000;
+}
+.btn-green:hover:not(:disabled) {
+  transform: translateY(-1px);
+  box-shadow: 0 4px 18px rgba(69,255,136,0.35);
+}
+.btn-green:disabled { opacity: 0.4; cursor: not-allowed; }
+.btn-blue {
+  background: linear-gradient(135deg, #4488ff, #2255cc);
+  color: #fff;
+}
+.btn-blue:hover:not(:disabled) {
+  transform: translateY(-1px);
+  box-shadow: 0 4px 18px rgba(68,136,255,0.35);
+}
+.btn-blue:disabled { opacity: 0.4; cursor: not-allowed; }
+
+/* bt progress */
+.bt-prog { display: none; margin-top: 10px; }
+.bt-prog.show { display: block; }
+.bt-prog-fill { background: linear-gradient(90deg, var(--lime), var(--cyan)); }
 </style>
 </head>
 <body>
@@ -323,6 +410,9 @@ tbody td { padding: 8px 12px; white-space: nowrap; }
   <button class="tab-btn" onclick="switchTab('common')" id="btn-common">
     🎯 Both Filters
     <span class="badge-tab" id="common-tab-count">0</span>
+  </button>
+  <button class="tab-btn" onclick="switchTab('backtest')" id="btn-backtest">
+    📊 Backtest
   </button>
 </div>
 
@@ -505,6 +595,245 @@ tbody td { padding: 8px 12px; white-space: nowrap; }
 
 </div><!-- /tab-common -->
 
+
+<!-- ════════════ BACKTEST TAB ════════════ -->
+<div class="tab-panel" id="tab-backtest">
+
+  <div class="bt-layout">
+
+    <!-- ── LEFT SIDEBAR: Parameters ─────────────────────────────────────── -->
+    <div class="bt-sidebar">
+
+      <div class="card">
+        <div class="card-hdr"><span class="card-title">📅 Date Range</span></div>
+        <div class="card-body">
+          <div class="param-group">
+            <div class="param-row">
+              <div class="param-label">Start Date</div>
+              <input class="param-input" type="date" id="bt-start" value="2019-01-01">
+            </div>
+            <div class="param-row">
+              <div class="param-label">End Date</div>
+              <input class="param-input" type="date" id="bt-end" value="2024-12-31">
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div class="card">
+        <div class="card-hdr"><span class="card-title">💰 Capital</span></div>
+        <div class="card-body">
+          <div class="param-group">
+            <div class="param-row">
+              <div class="param-label">Initial Capital (₹)</div>
+              <input class="param-input" type="number" id="bt-capital" value="500000" min="10000" step="10000">
+            </div>
+            <div class="param-row">
+              <div class="param-label">Risk per Trade <span id="lbl-risk">1%</span></div>
+              <input class="param-input" type="range" id="bt-risk" min="0.5" max="3" step="0.5" value="1"
+                     oninput="document.getElementById('lbl-risk').textContent=this.value+'%'">
+            </div>
+            <div class="param-row">
+              <div class="param-label">Max Open Positions <span id="lbl-maxpos">5</span></div>
+              <input class="param-input" type="range" id="bt-maxpos" min="1" max="10" step="1" value="5"
+                     oninput="document.getElementById('lbl-maxpos').textContent=this.value">
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div class="card">
+        <div class="card-hdr"><span class="card-title">📐 Strategy</span></div>
+        <div class="card-body">
+          <div class="param-group">
+            <div class="param-row">
+              <div class="param-label">Stop Loss % <span id="lbl-sl">8%</span></div>
+              <input class="param-input" type="range" id="bt-sl" min="5" max="15" step="1" value="8"
+                     oninput="document.getElementById('lbl-sl').textContent=this.value+'%'">
+            </div>
+            <div class="param-row">
+              <div class="param-label">Target 1 % <span id="lbl-t1">20%</span></div>
+              <input class="param-input" type="range" id="bt-t1" min="10" max="40" step="5" value="20"
+                     oninput="document.getElementById('lbl-t1').textContent=this.value+'%'">
+            </div>
+            <div class="param-row">
+              <div class="param-label">Target 2 % <span id="lbl-t2">35%</span></div>
+              <input class="param-input" type="range" id="bt-t2" min="20" max="60" step="5" value="35"
+                     oninput="document.getElementById('lbl-t2').textContent=this.value+'%'">
+            </div>
+            <div class="param-row">
+              <div class="param-label">Target 3 % <span id="lbl-t3">50%</span></div>
+              <input class="param-input" type="range" id="bt-t3" min="30" max="100" step="5" value="50"
+                     oninput="document.getElementById('lbl-t3').textContent=this.value+'%'">
+            </div>
+            <div class="param-row">
+              <div class="param-label">Min VCP Score <span id="lbl-score">40</span></div>
+              <input class="param-input" type="range" id="bt-score" min="20" max="80" step="5" value="40"
+                     oninput="document.getElementById('lbl-score').textContent=this.value">
+            </div>
+            <div class="param-row">
+              <div class="param-label">Min Contractions <span id="lbl-contr">2</span></div>
+              <input class="param-input" type="range" id="bt-contr" min="2" max="4" step="1" value="2"
+                     oninput="document.getElementById('lbl-contr').textContent=this.value">
+            </div>
+            <div class="param-row">
+              <div class="param-label">Time Stop (days) <span id="lbl-tstp">21</span></div>
+              <input class="param-input" type="range" id="bt-tstp" min="7" max="42" step="7" value="21"
+                     oninput="document.getElementById('lbl-tstp').textContent=this.value">
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div class="card">
+        <div class="card-hdr"><span class="card-title">⚙️ Costs &amp; Filter</span></div>
+        <div class="card-body">
+          <div class="param-group">
+            <div class="param-row">
+              <div class="param-label">Slippage %</div>
+              <input class="param-input" type="number" id="bt-slip" value="0.1" min="0" max="2" step="0.05">
+            </div>
+            <div class="param-row">
+              <div class="param-label">Brokerage per trade (₹)</div>
+              <input class="param-input" type="number" id="bt-brk" value="40" min="0" step="5">
+            </div>
+            <div class="toggle-row" style="margin-top:4px">
+              <input type="checkbox" id="bt-stt">
+              <label for="bt-stt">Include STT (+0.1% per sell)</label>
+            </div>
+            <div class="toggle-row" style="margin-top:6px">
+              <input type="checkbox" id="bt-mktfilter" checked>
+              <label for="bt-mktfilter">Market filter (Nifty 500 &gt; 200 SMA)</label>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div class="card">
+        <div class="card-hdr"><span class="card-title">🔬 Tickers</span></div>
+        <div class="card-body">
+          <div class="param-row">
+            <div class="param-label">Comma-separated (blank = Nifty 500)</div>
+            <textarea class="param-input" id="bt-tickers" rows="3"
+              placeholder="RELIANCE,TCS,TITAN,BAJFINANCE,HDFCBANK"></textarea>
+          </div>
+        </div>
+      </div>
+
+      <button class="btn btn-green" id="bt-run-btn" onclick="btRun()" style="width:100%;justify-content:center;padding:11px">
+        ▶&ensp;Run Backtest
+      </button>
+      <button class="btn btn-blue" id="bt-opt-btn" onclick="btOptRun()" style="width:100%;justify-content:center;padding:11px">
+        🔬&ensp;Optimise Parameters
+      </button>
+
+      <!-- Progress -->
+      <div class="bt-prog" id="bt-prog">
+        <div class="prog-meta">
+          <span id="bt-prog-label">Running…</span>
+          <span id="bt-prog-pct">0%</span>
+        </div>
+        <div class="prog-track">
+          <div class="prog-fill bt-prog-fill pulse" id="bt-prog-fill" style="width:0%"></div>
+        </div>
+        <div class="prog-ticker" id="bt-prog-msg" style="margin-top:5px;font-size:11px;color:var(--muted)"></div>
+      </div>
+
+    </div><!-- /sidebar -->
+
+    <!-- ── RIGHT MAIN ─────────────────────────────────────────────────── -->
+    <div class="bt-main">
+
+      <!-- empty state -->
+      <div id="bt-empty" class="card">
+        <div class="card-body">
+          <div class="empty">
+            <div class="empty-icon">📊</div>
+            <h3>Configure &amp; Run a Backtest</h3>
+            <p>Set the date range and parameters on the left, then click <strong>Run Backtest</strong>.<br>
+               For a quick test, enter 5 tickers — e.g. <code style="color:var(--cyan)">RELIANCE,TCS,TITAN,BAJFINANCE,HDFCBANK</code></p>
+          </div>
+        </div>
+      </div>
+
+      <!-- results (hidden until run completes) -->
+      <div id="bt-results" style="display:none; flex-direction:column; gap:18px">
+
+        <!-- Section 2: Metrics row -->
+        <div class="metric-grid" id="bt-metrics-row"></div>
+
+        <!-- Section 3: Equity curve -->
+        <div class="card">
+          <div class="card-hdr"><span class="card-title">Equity Curve vs Nifty 500</span></div>
+          <div class="card-body" style="padding:10px">
+            <div id="bt-equity-chart" class="bt-chart-lg"></div>
+          </div>
+        </div>
+
+        <!-- Section 4: Monthly heatmap -->
+        <div class="card">
+          <div class="card-hdr"><span class="card-title">Monthly Returns Heatmap</span></div>
+          <div class="card-body" style="padding:10px">
+            <div id="bt-monthly-chart" class="bt-chart"></div>
+          </div>
+        </div>
+
+        <!-- Section 5: Monte Carlo -->
+        <div class="card">
+          <div class="card-hdr"><span class="card-title">Monte Carlo Simulation (1 000 paths)</span></div>
+          <div class="card-body" style="padding:10px">
+            <div id="bt-mc-chart" class="bt-chart"></div>
+            <div id="bt-mc-summary" style="margin-top:10px; font-size:12px; color:var(--muted); text-align:center"></div>
+          </div>
+        </div>
+
+        <!-- Section 6: Trade log -->
+        <div class="card">
+          <div class="card-hdr">
+            <span class="card-title">Trade Log</span>
+            <span class="badge" id="bt-trade-count">0 trades</span>
+            <div class="tbl-hint" style="margin-left:auto; display:flex; gap:8px; align-items:center">
+              <select id="bt-filter-exit" class="param-input" style="width:auto;padding:3px 8px;font-size:11px" onchange="btFilterLog()">
+                <option value="">All exits</option>
+                <option value="stopped_out">Stopped out</option>
+                <option value="time_stop">Time stop</option>
+                <option value="target_1">Target 1</option>
+                <option value="target_2">Target 2</option>
+                <option value="target_3">Target 3</option>
+                <option value="trailing_stop">Trailing stop</option>
+                <option value="end_of_backtest">End of backtest</option>
+              </select>
+              <select id="bt-filter-pl" class="param-input" style="width:auto;padding:3px 8px;font-size:11px" onchange="btFilterLog()">
+                <option value="">All trades</option>
+                <option value="win">Winners only</option>
+                <option value="loss">Losers only</option>
+              </select>
+            </div>
+          </div>
+          <div class="tbl-wrap" id="bt-trade-log-wrap">
+            <div class="empty"><div class="empty-icon">📋</div><h3>No trades yet</h3></div>
+          </div>
+        </div>
+
+        <!-- Section 7: Optimiser results (hidden until optimise run) -->
+        <div class="card opt-section" id="bt-opt-section">
+          <div class="card-hdr">
+            <span class="card-title">🔬 Optimiser Results</span>
+            <span class="badge" id="bt-opt-count">0 combinations</span>
+          </div>
+          <div class="card-body" style="padding:10px">
+            <div id="bt-opt-chart" class="bt-chart"></div>
+            <div id="bt-opt-best" style="margin-top:12px;font-size:12px;color:var(--muted)"></div>
+          </div>
+        </div>
+
+      </div><!-- /bt-results -->
+
+    </div><!-- /bt-main -->
+  </div><!-- /bt-layout -->
+
+</div><!-- /tab-backtest -->
+
 </main>
 
 <!-- ── Chart modal (shared) ─────────────────────────────────────────────────── -->
@@ -520,11 +849,14 @@ tbody td { padding: 8px 12px; white-space: nowrap; }
   </div>
 </div>
 
+<!-- Plotly.js for interactive backtest charts -->
+<script src="https://cdn.plot.ly/plotly-2.35.2.min.js" charset="utf-8"></script>
+
 <!-- ══════════════════════════ SCRIPT ════════════════════════════════════════ -->
 <script>
 // ── Tab switching ─────────────────────────────────────────────────────────────
 function switchTab(name) {
-  ['sepa','vcp','common'].forEach(t => {
+  ['sepa','vcp','common','backtest'].forEach(t => {
     document.getElementById('btn-' + t).classList.toggle('active', t === name);
     document.getElementById('tab-' + t).classList.toggle('active', t === name);
   });
@@ -938,6 +1270,416 @@ function updateCommon() {
 
   h += `</tbody></table></div>`;
   area.innerHTML = h;
+}
+
+// ══════════════════════════════════════════════════════════════════════════════
+// BACKTEST
+// ══════════════════════════════════════════════════════════════════════════════
+
+const PLOTLY_LAYOUT_BASE = {
+  paper_bgcolor: '#0d0d1a', plot_bgcolor: '#12122a',
+  font: { color: '#ccccdd', size: 11 },
+  margin: { l: 60, r: 40, t: 30, b: 50 },
+  xaxis: { gridcolor: '#1e1e3a', linecolor: '#1e1e3a', zerolinecolor: '#1e1e3a' },
+  yaxis: { gridcolor: '#1e1e3a', linecolor: '#1e1e3a', zerolinecolor: '#1e1e3a' },
+  legend: { bgcolor: 'rgba(13,13,26,0.85)', bordercolor: '#1e1e3a', borderwidth: 1 },
+};
+
+let btTimer = null;
+let btOptTimer = null;
+let btAllTrades = [];   // full trade list for client-side filtering
+
+function btGetParams() {
+  const tRaw = document.getElementById('bt-tickers').value.trim();
+  const tickers = tRaw ? tRaw.split(',').map(s => s.trim()).filter(Boolean) : null;
+  return {
+    params: {
+      start_date:          document.getElementById('bt-start').value,
+      end_date:            document.getElementById('bt-end').value,
+      initial_capital:     parseFloat(document.getElementById('bt-capital').value),
+      risk_per_trade_pct:  parseFloat(document.getElementById('bt-risk').value) / 100,
+      max_open_positions:  parseInt(document.getElementById('bt-maxpos').value),
+      stop_loss_pct:       parseFloat(document.getElementById('bt-sl').value) / 100,
+      target_1_pct:        parseFloat(document.getElementById('bt-t1').value) / 100,
+      target_2_pct:        parseFloat(document.getElementById('bt-t2').value) / 100,
+      target_3_pct:        parseFloat(document.getElementById('bt-t3').value) / 100,
+      vcp_min_score:       parseInt(document.getElementById('bt-score').value),
+      min_contractions:    parseInt(document.getElementById('bt-contr').value),
+      time_stop_days:      parseInt(document.getElementById('bt-tstp').value),
+      slippage_pct:        parseFloat(document.getElementById('bt-slip').value) / 100,
+      brokerage_per_trade: parseFloat(document.getElementById('bt-brk').value),
+      include_stt:         document.getElementById('bt-stt').checked,
+      use_market_filter:   document.getElementById('bt-mktfilter').checked,
+    },
+    tickers,
+  };
+}
+
+async function btRun() {
+  const btn = document.getElementById('bt-run-btn');
+  btn.disabled = true;
+  document.getElementById('bt-empty').style.display = '';
+  document.getElementById('bt-results').style.display = 'none';
+  document.getElementById('bt-prog').classList.add('show');
+  document.getElementById('bt-prog-fill').style.width = '0%';
+  document.getElementById('bt-prog-fill').classList.add('pulse');
+  document.getElementById('bt-prog-label').textContent = 'Starting…';
+  document.getElementById('bt-prog-pct').textContent = '0%';
+  document.getElementById('bt-prog-msg').textContent = '';
+
+  const body = btGetParams();
+  const r = await fetch('/api/backtest/start', {
+    method: 'POST',
+    headers: {'Content-Type': 'application/json'},
+    body: JSON.stringify(body),
+  });
+  if (!r.ok) {
+    const err = (await r.json().catch(()=>({}))).error || 'Error starting backtest';
+    alert(err); btn.disabled = false; return;
+  }
+  btTimer = setInterval(btPoll, 2500);
+}
+
+async function btPoll() {
+  const data = await fetch('/api/backtest/progress').then(r=>r.json()).catch(()=>null);
+  if (!data) return;
+  const prog = data.progress || {};
+  const pct = prog.pct || 0;
+  document.getElementById('bt-prog-fill').style.width = pct + '%';
+  document.getElementById('bt-prog-pct').textContent = pct + '%';
+  document.getElementById('bt-prog-label').textContent = data.running ? 'Running…' : (data.error ? '⚠ Error' : 'Complete ✓');
+  document.getElementById('bt-prog-msg').textContent = prog.msg || '';
+
+  if (!data.running && data.completed) {
+    clearInterval(btTimer); btTimer = null;
+    document.getElementById('bt-run-btn').disabled = false;
+    document.getElementById('bt-prog-fill').classList.remove('pulse');
+    if (data.error) { alert('Backtest error: ' + data.error); return; }
+    const res = await fetch('/api/backtest/results').then(r=>r.json()).catch(()=>null);
+    if (res) btShowResults(res);
+  }
+}
+
+function btShowResults(res) {
+  document.getElementById('bt-empty').style.display = 'none';
+  const rDiv = document.getElementById('bt-results');
+  rDiv.style.display = 'flex';
+
+  btRenderMetrics(res.metrics || {});
+  btRenderEquityCurve(res.equity_curve || [], res.trade_log || []);
+  btRenderMonthly(res.metrics?.monthly_returns || []);
+  btRenderMonteCarlo(res.monte_carlo || {}, res.trade_log || []);
+  btAllTrades = res.trade_log || [];
+  btRenderTradeLog(btAllTrades);
+}
+
+// ── Section 2: Metrics ────────────────────────────────────────────────────────
+function btRenderMetrics(m) {
+  const cards = [
+    { lbl: 'Total Return',    val: m.total_return_pct,    fmt: v => (v>=0?'+':'')+v.toFixed(1)+'%',  cls: v=>v>=0?'mc-pos':'mc-neg', sub: `CAGR ${(m.cagr_pct||0).toFixed(1)}%` },
+    { lbl: 'vs Nifty 500',    val: m.alpha_pct,           fmt: v => (v>=0?'+':'')+v.toFixed(1)+'%',  cls: v=>v>=0?'mc-pos':'mc-neg', sub: `Bench CAGR ${(m.benchmark_cagr_pct||0).toFixed(1)}%` },
+    { lbl: 'Sharpe Ratio',    val: m.sharpe_ratio,        fmt: v => v.toFixed(2),                      cls: v=>v>=1?'mc-pos':v>=0?'mc-neu':'mc-neg', sub: `Calmar ${(m.calmar_ratio||0).toFixed(2)}` },
+    { lbl: 'Max Drawdown',    val: m.max_drawdown_pct,    fmt: v => v.toFixed(1)+'%',                  cls: ()=>'mc-neg', sub: `Vol ${(m.volatility_annual||0).toFixed(1)}%/yr` },
+    { lbl: 'Win Rate',        val: m.win_rate_pct,        fmt: v => v.toFixed(1)+'%',                  cls: v=>v>=50?'mc-pos':'mc-neg', sub: `${m.total_trades||0} trades` },
+    { lbl: 'Profit Factor',   val: m.profit_factor,       fmt: v => (v===Infinity?'∞':v.toFixed(2)),   cls: v=>v>=1.5?'mc-pos':v>=1?'mc-neu':'mc-neg', sub: `Exp ${(m.expectancy_pct||0).toFixed(1)}%` },
+    { lbl: 'Avg Win',         val: m.avg_win_pct,         fmt: v => '+'+v.toFixed(1)+'%',              cls: ()=>'mc-pos', sub: `Avg loss ${(m.avg_loss_pct||0).toFixed(1)}%` },
+    { lbl: 'Avg Hold (days)', val: m.avg_hold_days,       fmt: v => v.toFixed(0),                      cls: ()=>'mc-neu', sub: `Best ${(m.best_trade_pct||0).toFixed(1)}% / Worst ${(m.worst_trade_pct||0).toFixed(1)}%` },
+  ];
+
+  const row = document.getElementById('bt-metrics-row');
+  row.innerHTML = cards.map(c => {
+    const v = c.val ?? 0;
+    const cls = c.cls(v);
+    const txt = isNaN(v) ? '—' : c.fmt(v);
+    return `<div class="metric-card">
+      <div class="mc-lbl">${c.lbl}</div>
+      <div class="mc-val ${cls}">${txt}</div>
+      <div class="mc-sub">${c.sub || ''}</div>
+    </div>`;
+  }).join('');
+}
+
+// ── Section 3: Equity curve ───────────────────────────────────────────────────
+function btRenderEquityCurve(curve, trades) {
+  if (!curve.length) return;
+  const dates = curve.map(d=>d.date);
+  const port  = curve.map(d=>d.portfolio);
+  const bench = curve.map(d=>d.benchmark);
+
+  // Drawdown
+  const dd = [];
+  let peak = port[0];
+  for (const v of port) {
+    if (v > peak) peak = v;
+    dd.push(((v - peak) / peak) * 100);
+  }
+
+  // Trade entry markers
+  const entryDates = [], entryVals = [], exitDates = [], exitVals = [];
+  const curveMap = Object.fromEntries(curve.map(d=>[d.date, d.portfolio]));
+  for (const t of trades) {
+    if (curveMap[t.Entry_Date]) {
+      entryDates.push(t.Entry_Date); entryVals.push(curveMap[t.Entry_Date]);
+    }
+    if (t.Exit_Type === 'stopped_out' && curveMap[t.Exit_Date]) {
+      exitDates.push(t.Exit_Date); exitVals.push(curveMap[t.Exit_Date]);
+    }
+  }
+
+  const traces = [
+    { x: dates, y: port,  name: 'Portfolio', line: {color:'#45ff88',width:2}, yaxis:'y' },
+    { x: dates, y: bench, name: 'Nifty 500', line: {color:'#6667a0',width:1.5,dash:'dash'}, yaxis:'y' },
+    { x: dates, y: dd,    name: 'Drawdown',  fill:'tozeroy', fillcolor:'rgba(255,69,69,0.12)',
+      line:{color:'rgba(255,69,69,0.4)',width:1}, yaxis:'y2' },
+    { x: entryDates, y: entryVals, name: 'Entry', mode:'markers',
+      marker:{color:'#00d4ff',size:5,symbol:'circle'}, yaxis:'y' },
+    { x: exitDates, y: exitVals, name: 'Stop', mode:'markers',
+      marker:{color:'#ff4545',size:6,symbol:'x'}, yaxis:'y' },
+  ];
+
+  const layout = {
+    ...PLOTLY_LAYOUT_BASE,
+    margin: { l:70, r:70, t:30, b:50 },
+    yaxis:  { ...PLOTLY_LAYOUT_BASE.yaxis, title:'Portfolio (₹)', tickformat:',.0f' },
+    yaxis2: { ...PLOTLY_LAYOUT_BASE.yaxis, title:'Drawdown %', overlaying:'y', side:'right',
+               tickformat:'.1f', ticksuffix:'%', showgrid:false },
+    legend: { ...PLOTLY_LAYOUT_BASE.legend, orientation:'h', y:1.08 },
+    hovermode: 'x unified',
+  };
+
+  Plotly.newPlot('bt-equity-chart', traces, layout, {responsive:true, displayModeBar:false});
+}
+
+// ── Section 4: Monthly heatmap ────────────────────────────────────────────────
+function btRenderMonthly(monthly) {
+  if (!monthly.length) return;
+
+  const years  = [...new Set(monthly.map(d=>d.year))].sort();
+  const months = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
+
+  const z = years.map(y => {
+    return Array.from({length:12}, (_,mi) => {
+      const found = monthly.find(d=>d.year===y && d.month===mi+1);
+      return found ? found.return_pct : null;
+    });
+  });
+
+  const text = z.map(row => row.map(v => v != null ? v.toFixed(1)+'%' : ''));
+
+  const trace = {
+    type: 'heatmap',
+    x: months, y: years.map(String), z,
+    text, texttemplate: '%{text}',
+    colorscale: [
+      [0,   '#ff4545'], [0.35,'#993333'], [0.5, '#1e1e3a'],
+      [0.65,'#2a6040'], [1,   '#45ff88'],
+    ],
+    zmid: 0,
+    showscale: true,
+    colorbar: { thickness: 12, tickfont:{color:'#ccccdd',size:10} },
+    hovertemplate: '%{y} %{x}: %{text}<extra></extra>',
+  };
+
+  const layout = {
+    ...PLOTLY_LAYOUT_BASE,
+    margin: { l:55, r:80, t:20, b:40 },
+    yaxis: { ...PLOTLY_LAYOUT_BASE.yaxis, type:'category', autorange:'reversed' },
+  };
+
+  Plotly.newPlot('bt-monthly-chart', [trace], layout, {responsive:true, displayModeBar:false});
+}
+
+// ── Section 5: Monte Carlo fan chart ─────────────────────────────────────────
+function btRenderMonteCarlo(mc, trades) {
+  const fd = mc.fan_data || [];
+  if (!fd.length) return;
+
+  const xNums = fd.map(d=>d.trade_num);
+  const initial = trades.length > 0
+    ? (parseFloat(document.getElementById('bt-capital').value) || 500000)
+    : 500000;
+
+  // Rebuild actual path from trade log
+  let equity = initial;
+  const actualPath = [initial];
+  for (const t of trades) {
+    equity *= (1 + t.Net_PL_Pct / 100);
+    actualPath.push(Math.round(equity));
+  }
+  const xActual = Array.from({length:actualPath.length}, (_,i)=>i);
+
+  const traces = [
+    // 5-95 band
+    { x: [...xNums, ...[...xNums].reverse()],
+      y: [...fd.map(d=>d.p95), ...[...fd.map(d=>d.p5)].reverse()],
+      fill:'toself', fillcolor:'rgba(100,100,160,0.12)', line:{color:'transparent'},
+      name:'5%–95%', showlegend:true },
+    // 25-75 band
+    { x: [...xNums, ...[...xNums].reverse()],
+      y: [...fd.map(d=>d.p75), ...[...fd.map(d=>d.p25)].reverse()],
+      fill:'toself', fillcolor:'rgba(0,212,255,0.1)', line:{color:'transparent'},
+      name:'25%–75%', showlegend:true },
+    // Median
+    { x: xNums, y: fd.map(d=>d.p50), name:'Median', line:{color:'#4488ff',width:2} },
+    // Actual
+    { x: xActual, y: actualPath, name:'Actual', line:{color:'#45ff88',width:2,dash:'solid'} },
+  ];
+
+  const layout = {
+    ...PLOTLY_LAYOUT_BASE,
+    xaxis: { ...PLOTLY_LAYOUT_BASE.xaxis, title:'Trade number' },
+    yaxis: { ...PLOTLY_LAYOUT_BASE.yaxis, title:'Portfolio (₹)', tickformat:',.0f' },
+    hovermode: 'x unified',
+  };
+
+  Plotly.newPlot('bt-mc-chart', traces, layout, {responsive:true, displayModeBar:false});
+
+  document.getElementById('bt-mc-summary').innerHTML =
+    `Probability of profit: <strong style="color:var(--lime)">${mc.prob_profit}%</strong> &nbsp;|&nbsp; ` +
+    `Probability of doubling: <strong style="color:var(--gold)">${mc.prob_double}%</strong> &nbsp;|&nbsp; ` +
+    `Median: <strong style="color:var(--cyan)">₹${(mc.pct_50th||0).toLocaleString('en-IN',{maximumFractionDigits:0})}</strong> &nbsp;|&nbsp; ` +
+    `Worst 5%: <strong style="color:var(--red)">₹${(mc.pct_5th||0).toLocaleString('en-IN',{maximumFractionDigits:0})}</strong> &nbsp;|&nbsp; ` +
+    `Best 5%: <strong style="color:var(--lime)">₹${(mc.pct_95th||0).toLocaleString('en-IN',{maximumFractionDigits:0})}</strong>`;
+}
+
+// ── Section 6: Trade log ──────────────────────────────────────────────────────
+const EXIT_BADGE = {
+  stopped_out:    'eb-stop',
+  time_stop:      'eb-time',
+  target_1:       'eb-t1',
+  target_2:       'eb-t2',
+  target_3:       'eb-t3',
+  trailing_stop:  'eb-trail',
+  end_of_backtest:'eb-eob',
+};
+const EXIT_LABEL = {
+  stopped_out:'Stopped', time_stop:'Time stop', target_1:'T1 hit',
+  target_2:'T2 hit', target_3:'T3 hit', trailing_stop:'Trail stop',
+  end_of_backtest:'End',
+};
+
+function btRenderTradeLog(rows) {
+  document.getElementById('bt-trade-count').textContent = rows.length + ' trade' + (rows.length!==1?'s':'');
+  const wrap = document.getElementById('bt-trade-log-wrap');
+  if (!rows.length) {
+    wrap.innerHTML = '<div class="empty"><div class="empty-icon">📋</div><h3>No trades in this filter</h3></div>';
+    return;
+  }
+
+  let h = `<table><thead><tr>
+    <th>Ticker</th><th>Entry</th><th>Exit</th><th>Days</th>
+    <th>Entry ₹</th><th>Exit ₹</th><th>P&amp;L %</th><th>P&amp;L ₹</th>
+    <th>Exit Type</th><th>Score</th><th>MAE %</th>
+  </tr></thead><tbody>`;
+
+  for (const t of rows) {
+    const plCls = t.Net_PL_Pct >= 0 ? 'pos' : 'neg';
+    const badge = EXIT_BADGE[t.Exit_Type] || 'eb-eob';
+    const lbl   = EXIT_LABEL[t.Exit_Type] || t.Exit_Type;
+    const scoreCls = t.VCP_Score >= 75 ? 'score-ex' : t.VCP_Score >= 55 ? 'score-gd' : 'score-ok';
+    h += `<tr>
+      <td><strong style="color:var(--cyan)">${esc(t.Ticker)}</strong></td>
+      <td class="dim">${t.Entry_Date}</td>
+      <td class="dim">${t.Exit_Date}</td>
+      <td class="dim">${t.Hold_Days}</td>
+      <td>₹${(t.Entry_Price||0).toLocaleString('en-IN',{minimumFractionDigits:2,maximumFractionDigits:2})}</td>
+      <td>₹${(t.Exit_Price||0).toLocaleString('en-IN',{minimumFractionDigits:2,maximumFractionDigits:2})}</td>
+      <td class="${plCls}">${t.Net_PL_Pct>=0?'+':''}${(t.Net_PL_Pct||0).toFixed(2)}%</td>
+      <td class="${plCls}">${t.Net_PL>=0?'+':''}₹${Math.abs(t.Net_PL||0).toLocaleString('en-IN',{maximumFractionDigits:0})}</td>
+      <td><span class="exit-badge ${badge}">${lbl}</span></td>
+      <td><span class="score-pill ${scoreCls}">${t.VCP_Score}</span></td>
+      <td class="${(t.MAE_Pct||0)>5?'neg':'dim'}">${(t.MAE_Pct||0).toFixed(1)}%</td>
+    </tr>`;
+  }
+  h += '</tbody></table>';
+  wrap.innerHTML = h;
+}
+
+function btFilterLog() {
+  const exitF = document.getElementById('bt-filter-exit').value;
+  const plF   = document.getElementById('bt-filter-pl').value;
+  let rows = btAllTrades;
+  if (exitF) rows = rows.filter(t => t.Exit_Type === exitF);
+  if (plF === 'win')  rows = rows.filter(t => t.Net_PL_Pct > 0);
+  if (plF === 'loss') rows = rows.filter(t => t.Net_PL_Pct <= 0);
+  btRenderTradeLog(rows);
+}
+
+// ── Optimiser ─────────────────────────────────────────────────────────────────
+async function btOptRun() {
+  const btn = document.getElementById('bt-opt-btn');
+  btn.disabled = true;
+
+  const body = btGetParams();
+  const paramGrid = {
+    stop_loss_pct:    [0.06, 0.08, 0.10],
+    vcp_min_score:    [40, 55, 70],
+    min_contractions: [2, 3],
+    time_stop_days:   [14, 21, 28],
+  };
+
+  const r = await fetch('/api/backtest/optimise/start', {
+    method: 'POST',
+    headers: {'Content-Type': 'application/json'},
+    body: JSON.stringify({ param_grid: paramGrid, base_params: body.params, tickers: body.tickers }),
+  });
+  if (!r.ok) {
+    const err = (await r.json().catch(()=>({}))).error || 'Error';
+    alert(err); btn.disabled = false; return;
+  }
+  btOptTimer = setInterval(btOptPoll, 4000);
+}
+
+async function btOptPoll() {
+  const data = await fetch('/api/backtest/optimise/progress').then(r=>r.json()).catch(()=>null);
+  if (!data) return;
+  if (!data.running && data.completed) {
+    clearInterval(btOptTimer); btOptTimer = null;
+    document.getElementById('bt-opt-btn').disabled = false;
+    if (data.error) { alert('Optimiser error: ' + data.error); return; }
+    const res = await fetch('/api/backtest/optimise/results').then(r=>r.json()).catch(()=>null);
+    if (res) btShowOptResults(res);
+  }
+}
+
+function btShowOptResults(res) {
+  const sec = document.getElementById('bt-opt-section');
+  sec.classList.add('show');
+  document.getElementById('bt-opt-count').textContent = (res.rows||[]).length + ' combinations';
+
+  if (!res.rows || !res.rows.length) return;
+
+  const metric = res.metric || 'sharpe_ratio';
+  const rows   = res.rows.slice(0, 30);   // top 30 for display
+
+  const slVals  = [...new Set(rows.map(r=>r.stop_loss_pct))].sort((a,b)=>a-b);
+  const scrVals = [...new Set(rows.map(r=>r.vcp_min_score))].sort((a,b)=>a-b);
+
+  const z    = slVals.map(sl => scrVals.map(sc => {
+    const found = rows.find(r=>r.stop_loss_pct===sl && r.vcp_min_score===sc);
+    return found ? (found[metric] ?? null) : null;
+  }));
+  const text = z.map(row => row.map(v => v!=null ? v.toFixed(2) : ''));
+
+  Plotly.newPlot('bt-opt-chart', [{
+    type:'heatmap',
+    x: scrVals.map(v=>'Score '+v), y: slVals.map(v=>'SL '+(v*100).toFixed(0)+'%'),
+    z, text, texttemplate:'%{text}',
+    colorscale:[[0,'#ff4545'],[0.5,'#1e1e3a'],[1,'#45ff88']],
+    showscale:true,
+    colorbar:{ thickness:12, tickfont:{color:'#ccccdd',size:10} },
+  }], {
+    ...PLOTLY_LAYOUT_BASE,
+    margin:{ l:80, r:80, t:20, b:60 },
+    xaxis:{ ...PLOTLY_LAYOUT_BASE.xaxis, title:'Min VCP Score' },
+    yaxis:{ ...PLOTLY_LAYOUT_BASE.yaxis, title:'Stop Loss %' },
+  }, {responsive:true, displayModeBar:false});
+
+  const bp = res.best_params || {};
+  document.getElementById('bt-opt-best').innerHTML =
+    `<strong style="color:var(--gold)">Best parameters found</strong> — ` +
+    Object.entries(bp).map(([k,v])=>`<span style="color:var(--cyan)">${k}</span>: <strong>${v}</strong>`).join(' &nbsp;|&nbsp; ') +
+    ` &nbsp;→ ${metric} = <strong style="color:var(--lime)">${(res.best_score||0).toFixed(3)}</strong>`;
 }
 
 // ── On load: hydrate state if server has existing data ────────────────────────

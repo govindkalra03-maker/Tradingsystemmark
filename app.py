@@ -13,7 +13,7 @@ from datetime import datetime
 
 import pandas as pd
 import yfinance as yf
-from flask import Flask, Response, jsonify, render_template, send_file
+from flask import Flask, Response, jsonify, render_template, request, send_file
 
 warnings.filterwarnings("ignore")
 
@@ -23,6 +23,10 @@ from sepa_filter import check_sepa_conditions
 from tickers import NIFTY500
 from vcp_scanner import scan_ticker_vcp
 from vcp_plot import generate_vcp_chart
+from backtest_engine import VCPBacktester
+from backtest_metrics import calculate_metrics
+from backtest_monte_carlo import run_monte_carlo
+from backtest_optimiser import optimise_parameters
 
 BENCHMARK_TICKER  = "^CRSLDX"
 OUTPUT_DIR        = "output"
@@ -407,6 +411,215 @@ def vcp_export_csv():
                 f"attachment; filename=vcp_signals_{date_str}.csv"
         },
     )
+
+
+# ═════════════════════════════════════════════════════════════════════════════
+# BACKTEST
+# ═════════════════════════════════════════════════════════════════════════════
+
+_bt_state = {
+    "running":      False,
+    "completed":    False,
+    "error":        None,
+    "progress":     {"pct": 0, "msg": "Not started", "done": False, "error": None},
+    "results":      None,   # full results dict set when done
+}
+_bt_lock = threading.Lock()
+
+_opt_state = {
+    "running":   False,
+    "completed": False,
+    "error":     None,
+    "done":      0,
+    "total":     0,
+    "results":   None,
+}
+_opt_lock = threading.Lock()
+
+
+def _bg_backtest(tickers, params):
+    bt = VCPBacktester(params)
+
+    def _sync_progress():
+        with _bt_lock:
+            _bt_state["progress"] = dict(bt.progress)
+
+    # load data
+    ok = bt.load_data(tickers)
+    _sync_progress()
+    if not ok:
+        with _bt_lock:
+            _bt_state["running"] = False
+            _bt_state["completed"] = True
+            _bt_state["error"] = bt.progress.get("error", "Data load failed")
+        return
+
+    # run simulation
+    bt.run(tickers)
+    _sync_progress()
+
+    # compute analytics
+    metrics = calculate_metrics(bt.all_trades, bt.daily_values, params["initial_capital"])
+    mc      = run_monte_carlo(bt.all_trades, params["initial_capital"])
+
+    # build trade log as list of dicts for JSON
+    trade_log = bt.all_trades
+
+    # Add the actual portfolio path to the fan chart for display
+    actual_path = []
+    equity = params["initial_capital"]
+    for t in bt.all_trades:
+        equity *= (1 + t["Net_PL_Pct"] / 100)
+        actual_path.append(round(equity, 2))
+    mc["actual_path"] = actual_path
+
+    results = {
+        "metrics":      metrics,
+        "trade_log":    trade_log,
+        "equity_curve": bt.daily_values,
+        "monte_carlo":  mc,
+    }
+
+    with _bt_lock:
+        _bt_state["running"]   = False
+        _bt_state["completed"] = True
+        _bt_state["results"]   = results
+
+
+def _bg_optimise(tickers, param_grid, base_params, metric):
+    total_combos = 1
+    for v in param_grid.values():
+        total_combos *= len(v)
+
+    with _opt_lock:
+        _opt_state["total"] = total_combos
+        _opt_state["done"]  = 0
+
+    def _cb(done, total):
+        with _opt_lock:
+            _opt_state["done"]  = done
+            _opt_state["total"] = total
+
+    try:
+        df, best_params, best_score = optimise_parameters(
+            tickers, param_grid, base_params=base_params,
+            metric=metric, max_workers=4, progress_callback=_cb,
+        )
+        with _opt_lock:
+            _opt_state["running"]   = False
+            _opt_state["completed"] = True
+            _opt_state["results"]   = {
+                "rows":        df.to_dict(orient="records") if not df.empty else [],
+                "best_params": best_params,
+                "best_score":  best_score,
+                "metric":      metric,
+            }
+    except Exception as e:
+        with _opt_lock:
+            _opt_state["running"]   = False
+            _opt_state["completed"] = True
+            _opt_state["error"]     = str(e)
+
+
+# ── Backtest routes ───────────────────────────────────────────────────────────
+
+@app.route("/api/backtest/start", methods=["POST"])
+def backtest_start():
+    with _bt_lock:
+        if _bt_state["running"]:
+            return jsonify({"error": "Backtest already running"}), 400
+        _bt_state.update({
+            "running": True, "completed": False, "error": None, "results": None,
+            "progress": {"pct": 0, "msg": "Starting…", "done": False, "error": None},
+        })
+
+    body   = request.get_json(silent=True) or {}
+    params = body.get("params", {})
+    tickers_req = body.get("tickers", None)
+
+    # Use a small default set if none supplied (for quick tests)
+    if tickers_req:
+        tickers = [t if t.endswith(".NS") else t + ".NS" for t in tickers_req]
+    else:
+        from tickers import NIFTY500
+        tickers = NIFTY500
+
+    threading.Thread(target=_bg_backtest, args=(tickers, params), daemon=True).start()
+    return jsonify({"status": "started", "n_tickers": len(tickers)})
+
+
+@app.route("/api/backtest/progress")
+def backtest_progress():
+    with _bt_lock:
+        return jsonify({
+            "running":   _bt_state["running"],
+            "completed": _bt_state["completed"],
+            "error":     _bt_state["error"],
+            "progress":  _bt_state["progress"],
+        })
+
+
+@app.route("/api/backtest/results")
+def backtest_results():
+    with _bt_lock:
+        if not _bt_state["completed"] or _bt_state["results"] is None:
+            return jsonify({"error": "Results not ready"}), 404
+        return jsonify(_bt_state["results"])
+
+
+@app.route("/api/backtest/optimise/start", methods=["POST"])
+def optimise_start():
+    with _opt_lock:
+        if _opt_state["running"]:
+            return jsonify({"error": "Optimiser already running"}), 400
+        _opt_state.update({
+            "running": True, "completed": False, "error": None, "results": None,
+            "done": 0, "total": 0,
+        })
+
+    body       = request.get_json(silent=True) or {}
+    param_grid = body.get("param_grid", {
+        "stop_loss_pct":   [0.06, 0.08, 0.10],
+        "vcp_min_score":   [40, 55],
+        "min_contractions":[2, 3],
+        "time_stop_days":  [14, 21],
+    })
+    base_params   = body.get("base_params", {})
+    metric        = body.get("metric", "sharpe_ratio")
+    tickers_req   = body.get("tickers", None)
+
+    if tickers_req:
+        tickers = [t if t.endswith(".NS") else t + ".NS" for t in tickers_req]
+    else:
+        from tickers import NIFTY500
+        tickers = NIFTY500[:50]   # default to Nifty 50 for speed
+
+    threading.Thread(
+        target=_bg_optimise,
+        args=(tickers, param_grid, base_params, metric),
+        daemon=True,
+    ).start()
+    return jsonify({"status": "started"})
+
+
+@app.route("/api/backtest/optimise/progress")
+def optimise_progress():
+    with _opt_lock:
+        return jsonify({
+            "running":   _opt_state["running"],
+            "completed": _opt_state["completed"],
+            "error":     _opt_state["error"],
+            "done":      _opt_state["done"],
+            "total":     _opt_state["total"],
+        })
+
+
+@app.route("/api/backtest/optimise/results")
+def optimise_results():
+    with _opt_lock:
+        if not _opt_state["completed"] or _opt_state["results"] is None:
+            return jsonify({"error": "Optimiser results not ready"}), 404
+        return jsonify(_opt_state["results"])
 
 
 if __name__ == "__main__":
