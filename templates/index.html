@@ -1,0 +1,1722 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>SEPA + VCP Scanner</title>
+<style>
+:root {
+  --bg:     #0d0d1a;
+  --panel:  #12122a;
+  --border: #1e1e3a;
+  --cyan:   #00d4ff;
+  --gold:   #ffd700;
+  --orange: #ff8c00;
+  --green:  #7cfc00;
+  --red:    #ff4545;
+  --lime:   #45ff88;
+  --text:   #ccccdd;
+  --muted:  #6667a0;
+}
+* { box-sizing: border-box; margin: 0; padding: 0; }
+body {
+  background: var(--bg);
+  color: var(--text);
+  font-family: 'Segoe UI', system-ui, -apple-system, sans-serif;
+  min-height: 100vh;
+}
+
+/* ── Header ─────────────────────────────────────────────────────────────────── */
+header {
+  background: var(--panel);
+  border-bottom: 1px solid var(--border);
+  padding: 13px 28px;
+  display: flex; align-items: center; gap: 13px;
+  position: sticky; top: 0; z-index: 200;
+}
+.logo {
+  width: 36px; height: 36px;
+  background: linear-gradient(135deg, var(--cyan), var(--green));
+  border-radius: 8px;
+  display: flex; align-items: center; justify-content: center;
+  font-size: 18px; font-weight: 900; color: #000; flex-shrink: 0;
+}
+.hdr-text h1 { font-size: 17px; font-weight: 700; color: #fff; }
+.hdr-text p  { font-size: 11px; color: var(--muted); margin-top: 1px; }
+.hdr-meta    { margin-left: auto; font-size: 11px; color: var(--muted); text-align: right; }
+
+/* ── Tab nav ─────────────────────────────────────────────────────────────────── */
+.tab-nav {
+  display: flex; gap: 2px;
+  padding: 0 28px;
+  background: var(--panel);
+  border-bottom: 1px solid var(--border);
+}
+.tab-btn {
+  padding: 11px 22px;
+  background: none; border: none;
+  border-bottom: 2px solid transparent;
+  color: var(--muted);
+  font-size: 13px; font-weight: 600;
+  cursor: pointer; transition: all 0.15s;
+  margin-bottom: -1px;
+}
+.tab-btn:hover   { color: var(--text); }
+.tab-btn.active  { color: var(--cyan); border-bottom-color: var(--cyan); }
+.tab-btn .badge-tab {
+  display: inline-block;
+  margin-left: 6px;
+  padding: 1px 7px; border-radius: 99px;
+  font-size: 10px; font-weight: 700;
+  background: rgba(0,212,255,0.12); color: var(--cyan);
+  border: 1px solid rgba(0,212,255,0.22);
+}
+
+/* ── Layout ──────────────────────────────────────────────────────────────────── */
+main { max-width: 1680px; margin: 0 auto; padding: 22px 28px; }
+.tab-panel { display: none; }
+.tab-panel.active { display: flex; flex-direction: column; gap: 18px; }
+
+/* ── Card ────────────────────────────────────────────────────────────────────── */
+.card {
+  background: var(--panel);
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  overflow: hidden;
+}
+.card-hdr {
+  padding: 13px 20px;
+  border-bottom: 1px solid var(--border);
+  display: flex; align-items: center; gap: 10px;
+}
+.card-title { font-size: 13px; font-weight: 600; color: #fff; }
+.card-body  { padding: 20px; }
+
+/* ── Buttons ─────────────────────────────────────────────────────────────────── */
+.btn {
+  padding: 9px 20px; border-radius: 8px; border: none; cursor: pointer;
+  font-size: 13px; font-weight: 600; transition: all 0.18s;
+  display: inline-flex; align-items: center; gap: 6px;
+}
+.btn-primary {
+  background: linear-gradient(135deg, var(--cyan), #009dc0);
+  color: #000;
+}
+.btn-primary:hover:not(:disabled) {
+  transform: translateY(-1px);
+  box-shadow: 0 4px 18px rgba(0,212,255,0.35);
+}
+.btn-primary:disabled { opacity: 0.4; cursor: not-allowed; transform: none; box-shadow: none; }
+.btn-vcp {
+  background: linear-gradient(135deg, var(--gold), #cc9900);
+  color: #000;
+}
+.btn-vcp:hover:not(:disabled) {
+  transform: translateY(-1px);
+  box-shadow: 0 4px 18px rgba(255,215,0,0.35);
+}
+.btn-vcp:disabled { opacity: 0.4; cursor: not-allowed; transform: none; box-shadow: none; }
+.btn-outline {
+  background: transparent; color: var(--text);
+  border: 1px solid var(--border);
+}
+.btn-outline:hover:not(:disabled) { background: rgba(255,255,255,0.04); }
+.btn-outline:disabled { opacity: 0.4; cursor: not-allowed; }
+
+/* ── Stats row ───────────────────────────────────────────────────────────────── */
+.stats-row { display: flex; gap: 12px; flex-wrap: wrap; align-items: center; }
+.stat-box {
+  background: var(--bg); border: 1px solid var(--border);
+  border-radius: 8px; padding: 9px 16px; min-width: 108px;
+}
+.stat-box .lbl { font-size: 10px; color: var(--muted); text-transform: uppercase; letter-spacing: 0.7px; margin-bottom: 3px; }
+.stat-box .val { font-size: 19px; font-weight: 700; color: var(--cyan); }
+.stat-box .val.gold { color: var(--gold); }
+.stat-box .val.lime { color: var(--lime); }
+
+/* ── Progress ────────────────────────────────────────────────────────────────── */
+.prog-wrap { display: none; margin-top: 16px; }
+.prog-wrap.show { display: block; }
+.prog-meta { display: flex; justify-content: space-between; font-size: 11px; color: var(--muted); margin-bottom: 6px; }
+.prog-track { height: 7px; background: var(--border); border-radius: 4px; overflow: hidden; }
+.prog-fill  { height: 100%; border-radius: 4px; transition: width 0.55s ease; width: 0%; }
+.prog-fill.sepa-fill { background: linear-gradient(90deg, var(--cyan), var(--lime)); }
+.prog-fill.vcp-fill  { background: linear-gradient(90deg, var(--gold), var(--orange)); }
+.prog-fill.pulse { animation: glow 1.4s ease-in-out infinite alternate; }
+@keyframes glow {
+  from { box-shadow: 0 0 3px rgba(0,212,255,0.3); }
+  to   { box-shadow: 0 0 10px rgba(0,212,255,0.8); }
+}
+.prog-ticker { margin-top: 5px; font-size: 12px; color: var(--muted); }
+.prog-ticker strong { color: var(--cyan); }
+
+/* ── Log ─────────────────────────────────────────────────────────────────────── */
+.log-wrap { display: none; margin-top: 12px; }
+.log-wrap.show { display: block; }
+.log-box {
+  background: var(--bg); border: 1px solid var(--border);
+  border-radius: 8px; padding: 9px 13px;
+  max-height: 140px; overflow-y: auto;
+}
+.log-line { font-size: 11px; font-family: 'Courier New', monospace; line-height: 1.65; color: #44446a; }
+.log-line.pass  { color: var(--lime); }
+.log-line.error { color: var(--red); }
+.log-line.bench { color: var(--gold); }
+
+/* ── Table ───────────────────────────────────────────────────────────────────── */
+.tbl-hint { margin-left: auto; font-size: 11px; color: var(--muted); }
+.badge {
+  padding: 2px 9px; border-radius: 99px; font-size: 11px; font-weight: 600;
+  background: rgba(0,212,255,0.12); color: var(--cyan); border: 1px solid rgba(0,212,255,0.24);
+}
+.tbl-wrap { overflow-x: auto; }
+table { width: 100%; border-collapse: collapse; font-size: 12.5px; }
+thead th {
+  background: var(--bg); padding: 8px 12px;
+  text-align: left; color: var(--muted);
+  font-size: 10px; font-weight: 600; text-transform: uppercase; letter-spacing: 0.5px;
+  cursor: pointer; white-space: nowrap; user-select: none;
+  border-bottom: 1px solid var(--border); transition: color 0.14s;
+}
+thead th:hover { color: var(--cyan); }
+thead th.s-asc::after  { content: ' ↑'; color: var(--cyan); }
+thead th.s-desc::after { content: ' ↓'; color: var(--cyan); }
+thead th:not(.s-asc):not(.s-desc)::after { content: ' ↕'; opacity: 0.2; }
+tbody tr { border-bottom: 1px solid var(--border); transition: background 0.12s; }
+tbody tr:last-child { border-bottom: none; }
+tbody tr:hover { background: rgba(255,255,255,0.022); }
+tbody td { padding: 8px 12px; white-space: nowrap; }
+
+.tkr-cell { display: flex; align-items: center; gap: 6px; }
+.tkr-name {
+  font-weight: 700; color: var(--cyan); cursor: pointer; transition: opacity 0.14s;
+}
+.tkr-name:hover { opacity: 0.7; text-decoration: underline; }
+.chart-btn {
+  background: none; border: 1px solid var(--border); color: var(--muted);
+  padding: 1px 7px; border-radius: 4px; cursor: pointer; font-size: 10px; transition: all 0.14s;
+}
+.chart-btn:hover { border-color: var(--cyan); color: var(--cyan); }
+
+.pos { color: var(--lime); }
+.neg { color: var(--red); }
+.dim { color: var(--muted); }
+
+/* VCP score pill */
+.score-pill {
+  display: inline-block; padding: 1px 8px; border-radius: 99px;
+  font-size: 11px; font-weight: 700;
+}
+.score-ex { background: rgba(69,255,136,0.18); color: var(--lime); }
+.score-gd { background: rgba(255,215,0,0.18); color: var(--gold); }
+.score-ok { background: rgba(255,140,0,0.18); color: var(--orange); }
+
+/* ── Empty state ─────────────────────────────────────────────────────────────── */
+.empty { text-align: center; padding: 60px 24px; color: var(--muted); }
+.empty-icon { font-size: 42px; margin-bottom: 10px; opacity: 0.45; }
+.empty h3 { font-size: 14px; font-weight: 600; color: var(--text); margin-bottom: 5px; }
+.empty p  { font-size: 12px; }
+
+/* ── VCP info box ────────────────────────────────────────────────────────────── */
+.vcp-info {
+  background: rgba(255,215,0,0.06);
+  border: 1px solid rgba(255,215,0,0.25);
+  border-radius: 8px;
+  padding: 12px 16px;
+  font-size: 12px;
+  color: var(--muted);
+  line-height: 1.7;
+}
+.vcp-info strong { color: var(--gold); }
+
+/* ── Modal ───────────────────────────────────────────────────────────────────── */
+.overlay {
+  position: fixed; inset: 0;
+  background: rgba(0,0,0,0.84);
+  z-index: 500;
+  display: none; align-items: center; justify-content: center;
+  padding: 18px;
+  backdrop-filter: blur(3px);
+}
+.overlay.open { display: flex; }
+.modal {
+  background: var(--panel); border: 1px solid var(--border);
+  border-radius: 14px; max-width: 1240px; width: 100%;
+  animation: m-in 0.18s ease;
+}
+@keyframes m-in { from { opacity:0; transform:scale(0.96); } to { opacity:1; transform:scale(1); } }
+.modal-hd {
+  padding: 13px 17px; border-bottom: 1px solid var(--border);
+  display: flex; align-items: center; justify-content: space-between;
+}
+.modal-hd-title { font-size: 14px; font-weight: 700; color: #fff; }
+.modal-close {
+  background: none; border: none; color: var(--muted);
+  font-size: 22px; line-height: 1; cursor: pointer;
+  padding: 2px 6px; border-radius: 4px; transition: all 0.14s;
+}
+.modal-close:hover { color: #fff; background: rgba(255,255,255,0.06); }
+.modal-bd { padding: 13px; }
+.modal-bd img { width: 100%; border-radius: 8px; display: block; }
+.modal-loading { text-align: center; padding: 56px; color: var(--muted); font-size: 13px; }
+
+/* ── Common tab ──────────────────────────────────────────────────────────────── */
+.common-hero {
+  background: linear-gradient(135deg, rgba(0,212,255,0.07), rgba(69,255,136,0.07));
+  border: 1px solid rgba(0,212,255,0.2);
+  border-radius: 10px;
+  padding: 16px 20px;
+  display: flex; align-items: center; gap: 16px; flex-wrap: wrap;
+}
+.common-hero .big-num {
+  font-size: 52px; font-weight: 900;
+  background: linear-gradient(135deg, var(--cyan), var(--lime));
+  -webkit-background-clip: text; -webkit-text-fill-color: transparent;
+  line-height: 1;
+}
+.common-hero .hero-text h2 { font-size: 16px; font-weight: 700; color: #fff; }
+.common-hero .hero-text p  { font-size: 12px; color: var(--muted); margin-top: 3px; }
+.common-note {
+  font-size: 11px; color: var(--muted);
+  background: rgba(255,215,0,0.06); border: 1px solid rgba(255,215,0,0.18);
+  border-radius: 6px; padding: 8px 13px; margin-left: auto;
+  max-width: 340px; line-height: 1.6;
+}
+.common-note strong { color: var(--gold); }
+.dual-chart-btn {
+  background: none; border: 1px solid var(--border); color: var(--muted);
+  padding: 1px 6px; border-radius: 4px; cursor: pointer; font-size: 10px; transition: all 0.14s;
+  margin-right: 2px;
+}
+.dual-chart-btn.sepa-c:hover { border-color: var(--cyan); color: var(--cyan); }
+.dual-chart-btn.vcp-c:hover  { border-color: var(--gold); color: var(--gold); }
+
+/* ── Scrollbar ───────────────────────────────────────────────────────────────── */
+::-webkit-scrollbar { width: 5px; height: 5px; }
+::-webkit-scrollbar-track { background: var(--bg); }
+::-webkit-scrollbar-thumb { background: var(--border); border-radius: 3px; }
+::-webkit-scrollbar-thumb:hover { background: #2e2e55; }
+
+/* ── Backtest tab ──────────────────────────────────────────────────────────── */
+.bt-layout { display: flex; gap: 18px; align-items: flex-start; }
+.bt-sidebar {
+  width: 300px; flex-shrink: 0;
+  display: flex; flex-direction: column; gap: 14px;
+}
+.bt-main { flex: 1; min-width: 0; display: flex; flex-direction: column; gap: 18px; }
+
+/* param groups */
+.param-group { display: flex; flex-direction: column; gap: 9px; }
+.param-row { display: flex; flex-direction: column; gap: 3px; }
+.param-label {
+  font-size: 11px; color: var(--muted);
+  display: flex; justify-content: space-between;
+}
+.param-label span { color: var(--cyan); font-weight: 700; }
+.param-input {
+  background: var(--bg); border: 1px solid var(--border);
+  border-radius: 6px; color: var(--text);
+  padding: 6px 10px; font-size: 12px; width: 100%;
+}
+.param-input:focus { outline: none; border-color: var(--cyan); }
+input[type=range].param-input { padding: 4px 0; }
+
+/* metric cards */
+.metric-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 10px; }
+.metric-card {
+  background: var(--bg); border: 1px solid var(--border);
+  border-radius: 10px; padding: 12px 14px;
+}
+.metric-card .mc-lbl { font-size: 10px; color: var(--muted); text-transform: uppercase; letter-spacing: 0.6px; margin-bottom: 4px; }
+.metric-card .mc-val { font-size: 22px; font-weight: 800; }
+.metric-card .mc-sub { font-size: 10px; color: var(--muted); margin-top: 2px; }
+.mc-pos { color: var(--lime); }
+.mc-neg { color: var(--red); }
+.mc-neu { color: var(--cyan); }
+
+/* chart containers */
+.bt-chart { width: 100%; height: 340px; }
+.bt-chart-lg { width: 100%; height: 420px; }
+
+/* trade log badges */
+.exit-badge {
+  display: inline-block; padding: 1px 8px; border-radius: 99px;
+  font-size: 10px; font-weight: 700;
+}
+.eb-stop    { background: rgba(255,69,69,0.18);  color: var(--red); }
+.eb-time    { background: rgba(255,140,0,0.18);  color: var(--orange); }
+.eb-t1      { background: rgba(69,255,136,0.14); color: #45dd78; }
+.eb-t2      { background: rgba(69,255,136,0.22); color: var(--lime); }
+.eb-t3      { background: rgba(69,255,136,0.34); color: #00ff66; }
+.eb-trail   { background: rgba(0,212,255,0.15);  color: var(--cyan); }
+.eb-eob     { background: rgba(102,103,160,0.2); color: var(--muted); }
+
+/* toggle switch */
+.toggle-row { display: flex; align-items: center; gap: 8px; font-size: 12px; color: var(--muted); }
+.toggle-row input[type=checkbox] { accent-color: var(--cyan); width: 16px; height: 16px; cursor: pointer; }
+
+/* optimiser section */
+.opt-section { display: none; }
+.opt-section.show { display: block; }
+
+/* button variants */
+.btn-green {
+  background: linear-gradient(135deg, var(--lime), #28b860);
+  color: #000;
+}
+.btn-green:hover:not(:disabled) {
+  transform: translateY(-1px);
+  box-shadow: 0 4px 18px rgba(69,255,136,0.35);
+}
+.btn-green:disabled { opacity: 0.4; cursor: not-allowed; }
+.btn-blue {
+  background: linear-gradient(135deg, #4488ff, #2255cc);
+  color: #fff;
+}
+.btn-blue:hover:not(:disabled) {
+  transform: translateY(-1px);
+  box-shadow: 0 4px 18px rgba(68,136,255,0.35);
+}
+.btn-blue:disabled { opacity: 0.4; cursor: not-allowed; }
+
+/* bt progress */
+.bt-prog { display: none; margin-top: 10px; }
+.bt-prog.show { display: block; }
+.bt-prog-fill { background: linear-gradient(90deg, var(--lime), var(--cyan)); }
+</style>
+</head>
+<body>
+
+<!-- ── Header ──────────────────────────────────────────────────────────────── -->
+<header>
+  <div class="logo">S</div>
+  <div class="hdr-text">
+    <h1>Minervini Scanner</h1>
+    <p>SEPA Trend Template &nbsp;·&nbsp; VCP Setup Scanner &nbsp;·&nbsp; NSE Nifty 500</p>
+  </div>
+  <div class="hdr-meta" id="hdr-meta"></div>
+</header>
+
+<!-- ── Tab nav ─────────────────────────────────────────────────────────────── -->
+<div class="tab-nav">
+  <button class="tab-btn active" onclick="switchTab('sepa')" id="btn-sepa">
+    📈 SEPA Scanner
+    <span class="badge-tab" id="sepa-tab-count">0</span>
+  </button>
+  <button class="tab-btn" onclick="switchTab('vcp')" id="btn-vcp">
+    🔥 VCP Scanner
+    <span class="badge-tab" id="vcp-tab-count">0</span>
+  </button>
+  <button class="tab-btn" onclick="switchTab('common')" id="btn-common">
+    🎯 Both Filters
+    <span class="badge-tab" id="common-tab-count">0</span>
+  </button>
+  <button class="tab-btn" onclick="switchTab('backtest')" id="btn-backtest">
+    📊 Backtest
+  </button>
+</div>
+
+<!-- ══════════════════════════ MAIN ══════════════════════════════════════════ -->
+<main>
+
+<!-- ════════════ SEPA TAB ════════════ -->
+<div class="tab-panel active" id="tab-sepa">
+
+  <!-- Control card -->
+  <div class="card">
+    <div class="card-hdr"><span class="card-title">SEPA Trend Template Scanner</span></div>
+    <div class="card-body">
+      <div class="stats-row">
+        <button class="btn btn-primary" id="sepa-scan-btn" onclick="sepaStart()">
+          ▶&ensp;Run SEPA Scan
+        </button>
+        <button class="btn btn-outline" id="sepa-export-btn" onclick="sepaExport()" disabled>
+          ↓&ensp;Export CSV
+        </button>
+        <div class="stat-box">
+          <div class="lbl">Nifty 500 12m Return</div>
+          <div class="val gold" id="sepa-bench">—</div>
+        </div>
+        <div class="stat-box">
+          <div class="lbl">Tickers Scanned</div>
+          <div class="val" id="sepa-scanned">0 / 500</div>
+        </div>
+        <div class="stat-box">
+          <div class="lbl">SEPA Passed</div>
+          <div class="val lime" id="sepa-passed">0</div>
+        </div>
+      </div>
+
+      <div class="prog-wrap" id="sepa-prog-wrap">
+        <div class="prog-meta">
+          <span id="sepa-prog-label">Scanning…</span>
+          <span id="sepa-prog-pct">0%</span>
+        </div>
+        <div class="prog-track">
+          <div class="prog-fill sepa-fill pulse" id="sepa-prog-fill"></div>
+        </div>
+        <div class="prog-ticker">Processing: <strong id="sepa-prog-ticker">—</strong></div>
+      </div>
+
+      <div class="log-wrap" id="sepa-log-wrap">
+        <div class="log-box" id="sepa-log-box"></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Results card -->
+  <div class="card">
+    <div class="card-hdr">
+      <span class="card-title">SEPA Signal Results</span>
+      <span class="badge" id="sepa-result-badge">0 stocks</span>
+      <div class="tbl-hint">Click column header to sort &nbsp;·&nbsp; Click ticker for chart</div>
+    </div>
+    <div id="sepa-results-area">
+      <div class="empty">
+        <div class="empty-icon">📊</div>
+        <h3>No results yet</h3>
+        <p>Run a SEPA scan — all 8 Minervini trend-template conditions must pass.<br>
+           Scans ~500 stocks and takes 10–15 minutes.</p>
+      </div>
+    </div>
+  </div>
+
+</div><!-- /tab-sepa -->
+
+
+<!-- ════════════ VCP TAB ════════════ -->
+<div class="tab-panel" id="tab-vcp">
+
+  <!-- Info box -->
+  <div class="vcp-info">
+    <strong>VCP (Volatility Contraction Pattern)</strong> — Mark Minervini's high-tight setup.
+    The scanner looks for stocks in an uptrend with 2+ progressively tighter price contractions,
+    drying-up volume, and price near the <strong>pivot</strong> (last swing high).
+    Each contraction must be ≤ 82% of the previous range. The final contraction must be ≤ 25%.
+    &nbsp;|&nbsp; <strong>Entry:</strong> buy the pivot breakout on volume.
+    &nbsp;|&nbsp; <strong>Stop:</strong> last swing low.
+    &nbsp;|&nbsp; <strong>Targets:</strong> +20% / +35% / +50%.
+    &nbsp;|&nbsp; Position sized for 1% risk on ₹5 Lakh capital.
+  </div>
+
+  <!-- Control card -->
+  <div class="card">
+    <div class="card-hdr"><span class="card-title">VCP Setup Scanner</span></div>
+    <div class="card-body">
+      <div class="stats-row">
+        <button class="btn btn-vcp" id="vcp-scan-btn" onclick="vcpStart()">
+          🔥&ensp;Run VCP Scan
+        </button>
+        <button class="btn btn-outline" id="vcp-export-btn" onclick="vcpExport()" disabled>
+          ↓&ensp;Export CSV
+        </button>
+        <div class="stat-box">
+          <div class="lbl">Nifty 500 12m Return</div>
+          <div class="val gold" id="vcp-bench">—</div>
+        </div>
+        <div class="stat-box">
+          <div class="lbl">Tickers Scanned</div>
+          <div class="val" id="vcp-scanned">0 / 500</div>
+        </div>
+        <div class="stat-box">
+          <div class="lbl">VCP Setups Found</div>
+          <div class="val lime" id="vcp-passed">0</div>
+        </div>
+      </div>
+
+      <div class="prog-wrap" id="vcp-prog-wrap">
+        <div class="prog-meta">
+          <span id="vcp-prog-label">Scanning…</span>
+          <span id="vcp-prog-pct">0%</span>
+        </div>
+        <div class="prog-track">
+          <div class="prog-fill vcp-fill pulse" id="vcp-prog-fill"></div>
+        </div>
+        <div class="prog-ticker">Processing: <strong id="vcp-prog-ticker">—</strong></div>
+      </div>
+
+      <div class="log-wrap" id="vcp-log-wrap">
+        <div class="log-box" id="vcp-log-box"></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Results card -->
+  <div class="card">
+    <div class="card-hdr">
+      <span class="card-title">VCP Setup Results</span>
+      <span class="badge" id="vcp-result-badge">0 setups</span>
+      <div class="tbl-hint">Sorted by VCP Score &nbsp;·&nbsp; Click ticker for chart with all levels</div>
+    </div>
+    <div id="vcp-results-area">
+      <div class="empty">
+        <div class="empty-icon">🔥</div>
+        <h3>No setups yet</h3>
+        <p>Run a VCP scan to detect Volatility Contraction Patterns across Nifty 500.<br>
+           Looks for 2–4 tightening contractions with volume dry-up.</p>
+      </div>
+    </div>
+  </div>
+
+</div><!-- /tab-vcp -->
+
+
+<!-- ════════════ COMMON TAB ════════════ -->
+<div class="tab-panel" id="tab-common">
+
+  <div class="common-hero">
+    <div class="big-num" id="common-count">0</div>
+    <div class="hero-text">
+      <h2>Stocks passing both SEPA &amp; VCP filters</h2>
+      <p>These are the highest-conviction setups — strong trend <em>and</em> tight VCP base forming.</p>
+    </div>
+    <div class="common-note">
+      <strong>How to use:</strong> Stocks here satisfied all 8 SEPA trend-template
+      conditions <em>and</em> show a valid VCP contraction pattern. Run both scans
+      first, then check back here.
+    </div>
+  </div>
+
+  <div class="card">
+    <div class="card-hdr">
+      <span class="card-title">Highest-Conviction Setups</span>
+      <span class="badge" id="common-badge">0 stocks</span>
+      <div class="tbl-hint">SEPA chart = trend view &nbsp;·&nbsp; VCP chart = pattern + levels</div>
+    </div>
+    <div id="common-results-area">
+      <div class="empty">
+        <div class="empty-icon">🎯</div>
+        <h3>Run both scans first</h3>
+        <p>Once the SEPA scan and the VCP scan are both complete,<br>
+           this tab will show stocks that passed every filter.</p>
+      </div>
+    </div>
+  </div>
+
+</div><!-- /tab-common -->
+
+
+<!-- ════════════ BACKTEST TAB ════════════ -->
+<div class="tab-panel" id="tab-backtest">
+
+  <div class="bt-layout">
+
+    <!-- ── LEFT SIDEBAR: Parameters ─────────────────────────────────────── -->
+    <div class="bt-sidebar">
+
+      <div class="card">
+        <div class="card-hdr"><span class="card-title">📅 Date Range</span></div>
+        <div class="card-body">
+          <div class="param-group">
+            <div class="param-row">
+              <div class="param-label">Start Date</div>
+              <input class="param-input" type="date" id="bt-start" value="2019-01-01">
+            </div>
+            <div class="param-row">
+              <div class="param-label">End Date</div>
+              <input class="param-input" type="date" id="bt-end" value="2024-12-31">
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div class="card">
+        <div class="card-hdr"><span class="card-title">💰 Capital</span></div>
+        <div class="card-body">
+          <div class="param-group">
+            <div class="param-row">
+              <div class="param-label">Initial Capital (₹)</div>
+              <input class="param-input" type="number" id="bt-capital" value="500000" min="10000" step="10000">
+            </div>
+            <div class="param-row">
+              <div class="param-label">Risk per Trade <span id="lbl-risk">1%</span></div>
+              <input class="param-input" type="range" id="bt-risk" min="0.5" max="3" step="0.5" value="1"
+                     oninput="document.getElementById('lbl-risk').textContent=this.value+'%'">
+            </div>
+            <div class="param-row">
+              <div class="param-label">Max Open Positions <span id="lbl-maxpos">5</span></div>
+              <input class="param-input" type="range" id="bt-maxpos" min="1" max="10" step="1" value="5"
+                     oninput="document.getElementById('lbl-maxpos').textContent=this.value">
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div class="card">
+        <div class="card-hdr"><span class="card-title">📐 Strategy</span></div>
+        <div class="card-body">
+          <div class="param-group">
+            <div class="param-row">
+              <div class="param-label">Stop Loss % <span id="lbl-sl">8%</span></div>
+              <input class="param-input" type="range" id="bt-sl" min="5" max="15" step="1" value="8"
+                     oninput="document.getElementById('lbl-sl').textContent=this.value+'%'">
+            </div>
+            <div class="param-row">
+              <div class="param-label">Target 1 % <span id="lbl-t1">20%</span></div>
+              <input class="param-input" type="range" id="bt-t1" min="10" max="40" step="5" value="20"
+                     oninput="document.getElementById('lbl-t1').textContent=this.value+'%'">
+            </div>
+            <div class="param-row">
+              <div class="param-label">Target 2 % <span id="lbl-t2">35%</span></div>
+              <input class="param-input" type="range" id="bt-t2" min="20" max="60" step="5" value="35"
+                     oninput="document.getElementById('lbl-t2').textContent=this.value+'%'">
+            </div>
+            <div class="param-row">
+              <div class="param-label">Target 3 % <span id="lbl-t3">50%</span></div>
+              <input class="param-input" type="range" id="bt-t3" min="30" max="100" step="5" value="50"
+                     oninput="document.getElementById('lbl-t3').textContent=this.value+'%'">
+            </div>
+            <div class="param-row">
+              <div class="param-label">Min VCP Score <span id="lbl-score">40</span></div>
+              <input class="param-input" type="range" id="bt-score" min="20" max="80" step="5" value="40"
+                     oninput="document.getElementById('lbl-score').textContent=this.value">
+            </div>
+            <div class="param-row">
+              <div class="param-label">Min Contractions <span id="lbl-contr">2</span></div>
+              <input class="param-input" type="range" id="bt-contr" min="2" max="4" step="1" value="2"
+                     oninput="document.getElementById('lbl-contr').textContent=this.value">
+            </div>
+            <div class="param-row">
+              <div class="param-label">Time Stop (days) <span id="lbl-tstp">21</span></div>
+              <input class="param-input" type="range" id="bt-tstp" min="7" max="42" step="7" value="21"
+                     oninput="document.getElementById('lbl-tstp').textContent=this.value">
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div class="card">
+        <div class="card-hdr"><span class="card-title">⚙️ Costs &amp; Filter</span></div>
+        <div class="card-body">
+          <div class="param-group">
+            <div class="param-row">
+              <div class="param-label">Slippage %</div>
+              <input class="param-input" type="number" id="bt-slip" value="0.1" min="0" max="2" step="0.05">
+            </div>
+            <div class="param-row">
+              <div class="param-label">Brokerage per trade (₹)</div>
+              <input class="param-input" type="number" id="bt-brk" value="40" min="0" step="5">
+            </div>
+            <div class="toggle-row" style="margin-top:4px">
+              <input type="checkbox" id="bt-stt">
+              <label for="bt-stt">Include STT (+0.1% per sell)</label>
+            </div>
+            <div class="toggle-row" style="margin-top:6px">
+              <input type="checkbox" id="bt-mktfilter" checked>
+              <label for="bt-mktfilter">Market filter (Nifty 500 &gt; 200 SMA)</label>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div class="card">
+        <div class="card-hdr"><span class="card-title">🔬 Tickers</span></div>
+        <div class="card-body">
+          <div class="param-row">
+            <div class="param-label">Comma-separated (blank = Nifty 500)</div>
+            <textarea class="param-input" id="bt-tickers" rows="3"
+              placeholder="RELIANCE,TCS,TITAN,BAJFINANCE,HDFCBANK"></textarea>
+          </div>
+        </div>
+      </div>
+
+      <button class="btn btn-green" id="bt-run-btn" onclick="btRun()" style="width:100%;justify-content:center;padding:11px">
+        ▶&ensp;Run Backtest
+      </button>
+      <button class="btn btn-blue" id="bt-opt-btn" onclick="btOptRun()" style="width:100%;justify-content:center;padding:11px">
+        🔬&ensp;Optimise Parameters
+      </button>
+
+      <!-- Progress -->
+      <div class="bt-prog" id="bt-prog">
+        <div class="prog-meta">
+          <span id="bt-prog-label">Running…</span>
+          <span id="bt-prog-pct">0%</span>
+        </div>
+        <div class="prog-track">
+          <div class="prog-fill bt-prog-fill pulse" id="bt-prog-fill" style="width:0%"></div>
+        </div>
+        <div class="prog-ticker" id="bt-prog-msg" style="margin-top:5px;font-size:11px;color:var(--muted)"></div>
+      </div>
+
+    </div><!-- /sidebar -->
+
+    <!-- ── RIGHT MAIN ─────────────────────────────────────────────────── -->
+    <div class="bt-main">
+
+      <!-- empty state -->
+      <div id="bt-empty" class="card">
+        <div class="card-body">
+          <div class="empty">
+            <div class="empty-icon">📊</div>
+            <h3>Configure &amp; Run a Backtest</h3>
+            <p>Set the date range and parameters on the left, then click <strong>Run Backtest</strong>.<br>
+               For a quick test, enter 5 tickers — e.g. <code style="color:var(--cyan)">RELIANCE,TCS,TITAN,BAJFINANCE,HDFCBANK</code></p>
+          </div>
+        </div>
+      </div>
+
+      <!-- results (hidden until run completes) -->
+      <div id="bt-results" style="display:none; flex-direction:column; gap:18px">
+
+        <!-- Section 2: Metrics row -->
+        <div class="metric-grid" id="bt-metrics-row"></div>
+
+        <!-- Section 3: Equity curve -->
+        <div class="card">
+          <div class="card-hdr"><span class="card-title">Equity Curve vs Nifty 500</span></div>
+          <div class="card-body" style="padding:10px">
+            <div id="bt-equity-chart" class="bt-chart-lg"></div>
+          </div>
+        </div>
+
+        <!-- Section 4: Monthly heatmap -->
+        <div class="card">
+          <div class="card-hdr"><span class="card-title">Monthly Returns Heatmap</span></div>
+          <div class="card-body" style="padding:10px">
+            <div id="bt-monthly-chart" class="bt-chart"></div>
+          </div>
+        </div>
+
+        <!-- Section 5: Monte Carlo -->
+        <div class="card">
+          <div class="card-hdr"><span class="card-title">Monte Carlo Simulation (1 000 paths)</span></div>
+          <div class="card-body" style="padding:10px">
+            <div id="bt-mc-chart" class="bt-chart"></div>
+            <div id="bt-mc-summary" style="margin-top:10px; font-size:12px; color:var(--muted); text-align:center"></div>
+          </div>
+        </div>
+
+        <!-- Section 6: Trade log -->
+        <div class="card">
+          <div class="card-hdr">
+            <span class="card-title">Trade Log</span>
+            <span class="badge" id="bt-trade-count">0 trades</span>
+            <div class="tbl-hint" style="margin-left:auto; display:flex; gap:8px; align-items:center">
+              <select id="bt-filter-exit" class="param-input" style="width:auto;padding:3px 8px;font-size:11px" onchange="btFilterLog()">
+                <option value="">All exits</option>
+                <option value="stopped_out">Stopped out</option>
+                <option value="time_stop">Time stop</option>
+                <option value="target_1">Target 1</option>
+                <option value="target_2">Target 2</option>
+                <option value="target_3">Target 3</option>
+                <option value="trailing_stop">Trailing stop</option>
+                <option value="end_of_backtest">End of backtest</option>
+              </select>
+              <select id="bt-filter-pl" class="param-input" style="width:auto;padding:3px 8px;font-size:11px" onchange="btFilterLog()">
+                <option value="">All trades</option>
+                <option value="win">Winners only</option>
+                <option value="loss">Losers only</option>
+              </select>
+            </div>
+          </div>
+          <div class="tbl-wrap" id="bt-trade-log-wrap">
+            <div class="empty"><div class="empty-icon">📋</div><h3>No trades yet</h3></div>
+          </div>
+        </div>
+
+        <!-- Section 7: Optimiser results (hidden until optimise run) -->
+        <div class="card opt-section" id="bt-opt-section">
+          <div class="card-hdr">
+            <span class="card-title">🔬 Optimiser Results</span>
+            <span class="badge" id="bt-opt-count">0 combinations</span>
+          </div>
+          <div class="card-body" style="padding:10px">
+            <div id="bt-opt-chart" class="bt-chart"></div>
+            <div id="bt-opt-best" style="margin-top:12px;font-size:12px;color:var(--muted)"></div>
+          </div>
+        </div>
+
+      </div><!-- /bt-results -->
+
+    </div><!-- /bt-main -->
+  </div><!-- /bt-layout -->
+
+</div><!-- /tab-backtest -->
+
+</main>
+
+<!-- ── Chart modal (shared) ─────────────────────────────────────────────────── -->
+<div class="overlay" id="overlay" onclick="maybeCls(event)">
+  <div class="modal">
+    <div class="modal-hd">
+      <div class="modal-hd-title" id="modal-title">Chart</div>
+      <button class="modal-close" onclick="closeModal()">×</button>
+    </div>
+    <div class="modal-bd" id="modal-bd">
+      <div class="modal-loading">Loading…</div>
+    </div>
+  </div>
+</div>
+
+<!-- Plotly.js for interactive backtest charts -->
+<script src="https://cdn.plot.ly/plotly-2.35.2.min.js" charset="utf-8"></script>
+
+<!-- ══════════════════════════ SCRIPT ════════════════════════════════════════ -->
+<script>
+// ── Tab switching ─────────────────────────────────────────────────────────────
+function switchTab(name) {
+  ['sepa','vcp','common','backtest'].forEach(t => {
+    document.getElementById('btn-' + t).classList.toggle('active', t === name);
+    document.getElementById('tab-' + t).classList.toggle('active', t === name);
+  });
+  if (name === 'common') updateCommon();
+}
+
+// ── Helpers ───────────────────────────────────────────────────────────────────
+function fmtINR(v) {
+  return '₹' + v.toLocaleString('en-IN', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+}
+function esc(s) {
+  return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
+}
+function escA(s) { return String(s).replace(/"/g,'&quot;'); }
+function showEl(id) { document.getElementById(id).classList.add('show'); }
+
+// ── Modal ─────────────────────────────────────────────────────────────────────
+function openChart(ticker, api) {
+  document.getElementById('modal-title').textContent = ticker + ' — Chart';
+  document.getElementById('modal-bd').innerHTML = '<div class="modal-loading">Loading chart…</div>';
+  document.getElementById('overlay').classList.add('open');
+  document.getElementById('modal-bd').innerHTML =
+    `<img src="${api}/${encodeURIComponent(ticker)}" alt="${escA(ticker)}"
+      onerror="this.parentElement.innerHTML='<div class=modal-loading>Chart not available — run a scan first.</div>'"
+    />`;
+}
+function closeModal() { document.getElementById('overlay').classList.remove('open'); }
+function maybeCls(e)  { if (e.target.id === 'overlay') closeModal(); }
+document.addEventListener('keydown', e => { if (e.key === 'Escape') closeModal(); });
+
+
+// ══════════════════════════════════════════════════════════════════════════════
+// SEPA SCANNER
+// ══════════════════════════════════════════════════════════════════════════════
+const SEPA_COLS = [
+  { key:'Ticker',        label:'Ticker',        fmt:null },
+  { key:'Last_Close',    label:'Price (₹)',      fmt:v=>fmtINR(v) },
+  { key:'SMA_50',        label:'SMA 50',         fmt:v=>fmtINR(v) },
+  { key:'SMA_150',       label:'SMA 150',        fmt:v=>fmtINR(v) },
+  { key:'SMA_200',       label:'SMA 200',        fmt:v=>fmtINR(v) },
+  { key:'SMA_200_Slope', label:'SMA200 Slope',   fmt:v=>(v>=0?'+':'')+v.toFixed(2) },
+  { key:'52w_High',      label:'52w High',       fmt:v=>fmtINR(v) },
+  { key:'52w_Low',       label:'52w Low',        fmt:v=>fmtINR(v) },
+  { key:'Pct_From_High', label:'% from High',    fmt:v=>v.toFixed(2)+'%' },
+  { key:'Pct_From_Low',  label:'% from Low',     fmt:v=>'+'+v.toFixed(2)+'%' },
+  { key:'HighLow_Ratio', label:'H/L Ratio',      fmt:v=>v.toFixed(3) },
+  { key:'RS_vs_Nifty',   label:'RS vs Nifty',    fmt:v=>(v>=0?'+':'')+v.toFixed(2)+'%' },
+  { key:'Vol_Ratio',     label:'Vol ×',          fmt:v=>v!=null?v.toFixed(2)+'×':'—' },
+];
+
+let sepaTimer = null, sepaSort = 'RS_vs_Nifty', sepaDir = 'desc', sepaRows = [];
+
+async function sepaStart() {
+  const btn = document.getElementById('sepa-scan-btn');
+  btn.disabled = true;
+  const r = await fetch('/api/scan/start', { method:'POST' });
+  if (!r.ok) { alert((await r.json().catch(()=>({}))).error||'Error'); btn.disabled=false; return; }
+  sepaRows = [];
+  sepaReset();
+  showEl('sepa-prog-wrap'); showEl('sepa-log-wrap');
+  document.getElementById('sepa-log-box').innerHTML = '';
+  document.getElementById('sepa-prog-fill').style.width = '0%';
+  document.getElementById('sepa-prog-fill').classList.add('pulse');
+  sepaTimer = setInterval(sepaPoll, 2000);
+}
+
+function sepaReset() {
+  document.getElementById('sepa-scanned').textContent = '0 / 500';
+  document.getElementById('sepa-passed').textContent  = '0';
+  document.getElementById('sepa-result-badge').textContent = '0 stocks';
+  document.getElementById('sepa-tab-count').textContent    = '0';
+  document.getElementById('sepa-bench').textContent = '—';
+  sepaShowEmpty();
+}
+
+async function sepaPoll() {
+  const data = await fetch('/api/scan/progress').then(r=>r.json()).catch(()=>null);
+  if (!data) return;
+  sepaApply(data);
+  if (!data.running && data.completed) {
+    clearInterval(sepaTimer); sepaTimer = null;
+    document.getElementById('sepa-scan-btn').disabled = false;
+    document.getElementById('sepa-prog-fill').classList.remove('pulse');
+    if (data.results.length) document.getElementById('sepa-export-btn').disabled = false;
+    if (data.completed_at) {
+      const t = new Date(data.completed_at);
+      document.getElementById('hdr-meta').textContent =
+        'SEPA: ' + t.toLocaleDateString('en-IN') + ' ' + t.toLocaleTimeString('en-IN');
+    }
+  }
+}
+
+function sepaApply(data) {
+  const pct = data.total > 0 ? Math.round(data.current_idx/data.total*100) : 0;
+  document.getElementById('sepa-prog-fill').style.width  = pct + '%';
+  document.getElementById('sepa-prog-pct').textContent   = pct + '%';
+  document.getElementById('sepa-prog-label').textContent = data.running ? 'Scanning…' : (data.error ? '⚠ Error' : 'Complete ✓');
+  document.getElementById('sepa-prog-ticker').textContent = data.current_ticker || '—';
+  document.getElementById('sepa-scanned').textContent    = `${data.current_idx} / ${data.total}`;
+  document.getElementById('sepa-passed').textContent     = data.passed;
+  const cnt = data.passed;
+  document.getElementById('sepa-result-badge').textContent = `${cnt} stock${cnt!==1?'s':''}`;
+  document.getElementById('sepa-tab-count').textContent    = cnt;
+  if (data.benchmark_return!=null) {
+    const b=data.benchmark_return;
+    document.getElementById('sepa-bench').textContent = (b>=0?'+':'')+b.toFixed(2)+'%';
+  }
+  if (data.log && data.log.length) {
+    document.getElementById('sepa-log-box').innerHTML = data.log.slice().reverse().map(l=>{
+      let c='log-line';
+      if(l.startsWith('PASS'))c+=' pass'; else if(l.startsWith('ERROR'))c+=' error';
+      else if(l.startsWith('Benchmark')||l.startsWith('Scan'))c+=' bench';
+      return `<div class="${c}">${esc(l)}</div>`;
+    }).join('');
+  }
+  if (data.results.length !== sepaRows.length) {
+    sepaRows = data.results; sepaRenderTable(); updateCommon();
+  }
+}
+
+function sepaRenderTable() {
+  const area = document.getElementById('sepa-results-area');
+  if (!sepaRows.length) { sepaShowEmpty(); return; }
+  const sorted = [...sepaRows].sort((a,b)=>{
+    const va=a[sepaSort], vb=b[sepaSort];
+    if(va==null&&vb==null)return 0; if(va==null)return 1; if(vb==null)return -1;
+    if(typeof va==='string') return sepaDir==='asc'?va.localeCompare(vb):vb.localeCompare(va);
+    return sepaDir==='asc'?va-vb:vb-va;
+  });
+  let h = `<div class="tbl-wrap"><table><thead><tr>`;
+  SEPA_COLS.forEach(c=>{
+    const cls=c.key===sepaSort?(sepaDir==='asc'?'s-asc':'s-desc'):'';
+    h+=`<th class="${cls}" onclick="sepaSort_('${c.key}')">${c.label}</th>`;
+  });
+  h+=`</tr></thead><tbody>`;
+  sorted.forEach(row=>{
+    h+=`<tr>`;
+    SEPA_COLS.forEach(c=>{
+      if(c.key==='Ticker'){
+        h+=`<td><div class="tkr-cell">
+          <span class="tkr-name" onclick="openChart('${escA(row.Ticker)}','/api/chart')">${esc(row.Ticker)}</span>
+          <button class="chart-btn" onclick="openChart('${escA(row.Ticker)}','/api/chart')">Chart</button>
+        </div></td>`; return;
+      }
+      const v=row[c.key], txt=(v!=null&&c.fmt)?c.fmt(v):(v??'—');
+      let cls='';
+      if(c.key==='RS_vs_Nifty'&&v!=null)    cls=v>=0?'pos':'neg';
+      if(c.key==='SMA_200_Slope'&&v!=null)  cls=v>=0?'pos':'neg';
+      if(c.key==='Pct_From_High')           cls='neg';
+      if(c.key==='Pct_From_Low')            cls='pos';
+      h+=`<td class="${cls}">${txt}</td>`;
+    });
+    h+=`</tr>`;
+  });
+  h+=`</tbody></table></div>`;
+  area.innerHTML = h;
+}
+
+function sepaSort_(col) {
+  sepaDir = sepaSort===col?(sepaDir==='asc'?'desc':'asc'):(col==='Ticker'?'asc':'desc');
+  sepaSort = col; sepaRenderTable();
+}
+function sepaShowEmpty() {
+  document.getElementById('sepa-results-area').innerHTML = `<div class="empty">
+    <div class="empty-icon">📊</div><h3>No results yet</h3>
+    <p>Run a SEPA scan — all 8 Minervini conditions must pass.<br>Scans ~500 stocks, takes 10–15 minutes.</p>
+  </div>`;
+}
+function sepaExport() { window.location.href = '/api/export/csv'; }
+
+
+// ══════════════════════════════════════════════════════════════════════════════
+// VCP SCANNER
+// ══════════════════════════════════════════════════════════════════════════════
+const VCP_COLS = [
+  { key:'Ticker',          label:'Ticker',          fmt:null },
+  { key:'Last_Close',      label:'Price (₹)',        fmt:v=>fmtINR(v) },
+  { key:'VCP_Score',       label:'Score',            fmt:null },         // custom render
+  { key:'N_Contractions',  label:'C\'s',             fmt:v=>v },
+  { key:'Tightening_Pct',  label:'Tighten %',        fmt:v=>v+'%' },
+  { key:'Pivot',           label:'Pivot (₹)',        fmt:v=>fmtINR(v) },
+  { key:'Stop_Loss',       label:'Stop (₹)',         fmt:v=>fmtINR(v) },
+  { key:'Stop_Pct',        label:'Stop %',           fmt:v=>v+'%' },
+  { key:'RR_Ratio',        label:'R/R',              fmt:v=>v+'×' },
+  { key:'Target_1',        label:'T1 +20%',          fmt:v=>fmtINR(v) },
+  { key:'Target_2',        label:'T2 +35%',          fmt:v=>fmtINR(v) },
+  { key:'Target_3',        label:'T3 +50%',          fmt:v=>fmtINR(v) },
+  { key:'Shares_5L',       label:'Shares (5L)',      fmt:v=>v },
+  { key:'Capital_Risk_5L', label:'Risk (₹)',         fmt:v=>fmtINR(v) },
+  { key:'Vol_Declining',   label:'Vol ↓',            fmt:v=>v?'✓':'—' },
+  { key:'RS_vs_Nifty',     label:'RS vs Nifty',      fmt:v=>v!=null?(v>=0?'+':'')+v.toFixed(2)+'%':'—' },
+];
+
+let vcpTimer = null, vcpSortCol = 'VCP_Score', vcpSortDir = 'desc', vcpRows = [];
+
+async function vcpStart() {
+  const btn = document.getElementById('vcp-scan-btn');
+  btn.disabled = true;
+  const r = await fetch('/api/vcp/start', { method:'POST' });
+  if (!r.ok) { alert((await r.json().catch(()=>({}))).error||'Error'); btn.disabled=false; return; }
+  vcpRows = [];
+  vcpReset();
+  showEl('vcp-prog-wrap'); showEl('vcp-log-wrap');
+  document.getElementById('vcp-log-box').innerHTML = '';
+  document.getElementById('vcp-prog-fill').style.width = '0%';
+  document.getElementById('vcp-prog-fill').classList.add('pulse');
+  vcpTimer = setInterval(vcpPoll, 2000);
+}
+
+function vcpReset() {
+  document.getElementById('vcp-scanned').textContent = '0 / 500';
+  document.getElementById('vcp-passed').textContent  = '0';
+  document.getElementById('vcp-result-badge').textContent = '0 setups';
+  document.getElementById('vcp-tab-count').textContent    = '0';
+  document.getElementById('vcp-bench').textContent = '—';
+  vcpShowEmpty();
+}
+
+async function vcpPoll() {
+  const data = await fetch('/api/vcp/progress').then(r=>r.json()).catch(()=>null);
+  if (!data) return;
+  vcpApply(data);
+  if (!data.running && data.completed) {
+    clearInterval(vcpTimer); vcpTimer = null;
+    document.getElementById('vcp-scan-btn').disabled = false;
+    document.getElementById('vcp-prog-fill').classList.remove('pulse');
+    if (data.results.length) document.getElementById('vcp-export-btn').disabled = false;
+    if (data.completed_at) {
+      const t = new Date(data.completed_at);
+      document.getElementById('hdr-meta').textContent =
+        'VCP: ' + t.toLocaleDateString('en-IN') + ' ' + t.toLocaleTimeString('en-IN');
+    }
+  }
+}
+
+function vcpApply(data) {
+  const pct = data.total > 0 ? Math.round(data.current_idx/data.total*100) : 0;
+  document.getElementById('vcp-prog-fill').style.width  = pct + '%';
+  document.getElementById('vcp-prog-pct').textContent   = pct + '%';
+  document.getElementById('vcp-prog-label').textContent = data.running ? 'Scanning…' : (data.error ? '⚠ Error' : 'Complete ✓');
+  document.getElementById('vcp-prog-ticker').textContent = data.current_ticker || '—';
+  document.getElementById('vcp-scanned').textContent    = `${data.current_idx} / ${data.total}`;
+  document.getElementById('vcp-passed').textContent     = data.passed;
+  const cnt = data.passed;
+  document.getElementById('vcp-result-badge').textContent = `${cnt} setup${cnt!==1?'s':''}`;
+  document.getElementById('vcp-tab-count').textContent    = cnt;
+  if (data.benchmark_return!=null) {
+    const b=data.benchmark_return;
+    document.getElementById('vcp-bench').textContent = (b>=0?'+':'')+b.toFixed(2)+'%';
+  }
+  if (data.log && data.log.length) {
+    document.getElementById('vcp-log-box').innerHTML = data.log.slice().reverse().map(l=>{
+      let c='log-line';
+      if(l.startsWith('PASS'))c+=' pass'; else if(l.startsWith('ERROR'))c+=' error';
+      else if(l.startsWith('Benchmark')||l.startsWith('VCP scan'))c+=' bench';
+      return `<div class="${c}">${esc(l)}</div>`;
+    }).join('');
+  }
+  if (data.results.length !== vcpRows.length) {
+    vcpRows = data.results; vcpRenderTable(); updateCommon();
+  }
+}
+
+function vcpRenderTable() {
+  const area = document.getElementById('vcp-results-area');
+  if (!vcpRows.length) { vcpShowEmpty(); return; }
+
+  const sorted = [...vcpRows].sort((a,b)=>{
+    const va=a[vcpSortCol], vb=b[vcpSortCol];
+    if(va==null&&vb==null)return 0; if(va==null)return 1; if(vb==null)return -1;
+    if(typeof va==='string') return vcpSortDir==='asc'?va.localeCompare(vb):vb.localeCompare(va);
+    return vcpSortDir==='asc'?va-vb:vb-va;
+  });
+
+  let h = `<div class="tbl-wrap"><table><thead><tr>`;
+  VCP_COLS.forEach(c=>{
+    const cls=c.key===vcpSortCol?(vcpSortDir==='asc'?'s-asc':'s-desc'):'';
+    h+=`<th class="${cls}" onclick="vcpSortBy('${c.key}')">${c.label}</th>`;
+  });
+  h+=`</tr></thead><tbody>`;
+
+  sorted.forEach(row=>{
+    h+=`<tr>`;
+    VCP_COLS.forEach(c=>{
+      if (c.key==='Ticker') {
+        h+=`<td><div class="tkr-cell">
+          <span class="tkr-name" onclick="openChart('${escA(row.Ticker)}','/api/vcp/chart')">${esc(row.Ticker)}</span>
+          <button class="chart-btn" onclick="openChart('${escA(row.Ticker)}','/api/vcp/chart')">Chart</button>
+        </div></td>`; return;
+      }
+      if (c.key==='VCP_Score') {
+        const v=row.VCP_Score;
+        const cls=v>=75?'score-ex':v>=55?'score-gd':'score-ok';
+        h+=`<td><span class="score-pill ${cls}">${v}/100</span></td>`; return;
+      }
+      const v=row[c.key], txt=(v!=null&&c.fmt)?c.fmt(v):(v??'—');
+      let cls='';
+      if(c.key==='RS_vs_Nifty'&&v!=null) cls=v>=0?'pos':'neg';
+      if(c.key==='Stop_Pct')             cls='neg';
+      if(c.key==='Tightening_Pct')       cls='pos';
+      if(c.key==='RR_Ratio'&&v!=null)    cls=v>=2?'pos':'dim';
+      if(c.key==='Vol_Declining')        cls=row.Vol_Declining?'pos':'dim';
+      if(c.key==='N_Contractions')       cls='pos';
+      h+=`<td class="${cls}">${txt}</td>`;
+    });
+    h+=`</tr>`;
+  });
+
+  h+=`</tbody></table></div>`;
+  area.innerHTML = h;
+}
+
+function vcpSortBy(col) {
+  vcpSortDir = vcpSortCol===col?(vcpSortDir==='asc'?'desc':'asc'):(col==='Ticker'?'asc':'desc');
+  vcpSortCol = col; vcpRenderTable();
+}
+function vcpShowEmpty() {
+  document.getElementById('vcp-results-area').innerHTML = `<div class="empty">
+    <div class="empty-icon">🔥</div><h3>No setups yet</h3>
+    <p>Run a VCP scan to detect Volatility Contraction Patterns across Nifty 500.<br>
+       Looks for 2–4 tightening contractions with volume dry-up.</p>
+  </div>`;
+}
+function vcpExport() { window.location.href = '/api/vcp/export/csv'; }
+
+
+// ══════════════════════════════════════════════════════════════════════════════
+// COMMON — stocks passing both SEPA and VCP
+// ══════════════════════════════════════════════════════════════════════════════
+const COMMON_COLS = [
+  { key:'Ticker',         label:'Ticker' },
+  { key:'Last_Close',     label:'Price (₹)',      fmt:v=>fmtINR(v),                      src:'vcp' },
+  { key:'VCP_Score',      label:'VCP Score',       fmt:null,                              src:'vcp' },  // score pill
+  { key:'N_Contractions', label:'C\'s',            fmt:v=>v,                              src:'vcp' },
+  { key:'Tightening_Pct', label:'Tighten %',       fmt:v=>v+'%',                          src:'vcp' },
+  { key:'Pivot',          label:'Pivot (₹)',       fmt:v=>fmtINR(v),                      src:'vcp' },
+  { key:'Stop_Loss',      label:'Stop (₹)',        fmt:v=>fmtINR(v),                      src:'vcp' },
+  { key:'RR_Ratio',       label:'R/R',             fmt:v=>v+'×',                          src:'vcp' },
+  { key:'Target_1',       label:'T1 +20%',         fmt:v=>fmtINR(v),                      src:'vcp' },
+  { key:'RS_vs_Nifty',    label:'RS vs Nifty',     fmt:v=>v!=null?(v>=0?'+':'')+v.toFixed(2)+'%':'—', src:'sepa' },
+  { key:'SMA_200_Slope',  label:'SMA200 Slope',    fmt:v=>(v>=0?'+':'')+v.toFixed(2),     src:'sepa' },
+  { key:'Pct_From_High',  label:'% from 52w High', fmt:v=>v.toFixed(2)+'%',               src:'sepa' },
+  { key:'Vol_Declining',  label:'Vol ↓',           fmt:v=>v?'✓':'—',                      src:'vcp' },
+];
+
+function updateCommon() {
+  // Build a lookup from ticker → sepa row
+  const sepaMap = {};
+  sepaRows.forEach(r => { sepaMap[r.Ticker] = r; });
+
+  // Find VCP rows whose ticker also appears in SEPA
+  const common = vcpRows
+    .filter(r => sepaMap[r.Ticker])
+    .map(vcpRow => ({ ...sepaMap[vcpRow.Ticker], ...vcpRow })); // VCP fields win on conflict
+
+  const cnt = common.length;
+  document.getElementById('common-count').textContent     = cnt;
+  document.getElementById('common-badge').textContent     = `${cnt} stock${cnt!==1?'s':''}`;
+  document.getElementById('common-tab-count').textContent = cnt;
+
+  const area = document.getElementById('common-results-area');
+
+  if (!cnt) {
+    const bothDone = sepaRows.length > 0 && vcpRows.length > 0;
+    area.innerHTML = `<div class="empty">
+      <div class="empty-icon">🎯</div>
+      <h3>${bothDone ? 'No overlap found' : 'Run both scans first'}</h3>
+      <p>${bothDone
+        ? 'No stocks passed every SEPA condition <em>and</em> formed a valid VCP pattern simultaneously.'
+        : 'Once the SEPA scan and the VCP scan are both complete,<br>this tab will show stocks that passed every filter.'}</p>
+    </div>`;
+    return;
+  }
+
+  // Sort by VCP Score desc by default
+  common.sort((a,b) => (b.VCP_Score||0) - (a.VCP_Score||0));
+
+  let h = `<div class="tbl-wrap"><table><thead><tr>`;
+  COMMON_COLS.forEach(c => { h += `<th>${c.label}</th>`; });
+  h += `</tr></thead><tbody>`;
+
+  common.forEach(row => {
+    h += `<tr>`;
+    COMMON_COLS.forEach(c => {
+      if (c.key === 'Ticker') {
+        h += `<td><div class="tkr-cell">
+          <span class="tkr-name" onclick="openChart('${escA(row.Ticker)}','/api/chart')">${esc(row.Ticker)}</span>
+          <button class="dual-chart-btn sepa-c" onclick="openChart('${escA(row.Ticker)}','/api/chart')" title="SEPA chart">S</button>
+          <button class="dual-chart-btn vcp-c"  onclick="openChart('${escA(row.Ticker)}','/api/vcp/chart')" title="VCP chart">V</button>
+        </div></td>`; return;
+      }
+      if (c.key === 'VCP_Score') {
+        const v = row.VCP_Score;
+        const cls = v>=75?'score-ex':v>=55?'score-gd':'score-ok';
+        h += `<td><span class="score-pill ${cls}">${v}/100</span></td>`; return;
+      }
+      const v = row[c.key];
+      const txt = (v!=null && c.fmt) ? c.fmt(v) : (v??'—');
+      let cls = '';
+      if (c.key==='RS_vs_Nifty'   && v!=null) cls = v>=0?'pos':'neg';
+      if (c.key==='SMA_200_Slope' && v!=null) cls = v>=0?'pos':'neg';
+      if (c.key==='Pct_From_High')            cls = 'neg';
+      if (c.key==='Tightening_Pct')           cls = 'pos';
+      if (c.key==='RR_Ratio'      && v!=null) cls = v>=2?'pos':'dim';
+      if (c.key==='Vol_Declining')            cls = row.Vol_Declining?'pos':'dim';
+      if (c.key==='N_Contractions')           cls = 'pos';
+      h += `<td class="${cls}">${txt}</td>`;
+    });
+    h += `</tr>`;
+  });
+
+  h += `</tbody></table></div>`;
+  area.innerHTML = h;
+}
+
+// ══════════════════════════════════════════════════════════════════════════════
+// BACKTEST
+// ══════════════════════════════════════════════════════════════════════════════
+
+const PLOTLY_LAYOUT_BASE = {
+  paper_bgcolor: '#0d0d1a', plot_bgcolor: '#12122a',
+  font: { color: '#ccccdd', size: 11 },
+  margin: { l: 60, r: 40, t: 30, b: 50 },
+  xaxis: { gridcolor: '#1e1e3a', linecolor: '#1e1e3a', zerolinecolor: '#1e1e3a' },
+  yaxis: { gridcolor: '#1e1e3a', linecolor: '#1e1e3a', zerolinecolor: '#1e1e3a' },
+  legend: { bgcolor: 'rgba(13,13,26,0.85)', bordercolor: '#1e1e3a', borderwidth: 1 },
+};
+
+let btTimer = null;
+let btOptTimer = null;
+let btAllTrades = [];   // full trade list for client-side filtering
+
+function btGetParams() {
+  const tRaw = document.getElementById('bt-tickers').value.trim();
+  const tickers = tRaw ? tRaw.split(',').map(s => s.trim()).filter(Boolean) : null;
+  return {
+    params: {
+      start_date:          document.getElementById('bt-start').value,
+      end_date:            document.getElementById('bt-end').value,
+      initial_capital:     parseFloat(document.getElementById('bt-capital').value),
+      risk_per_trade_pct:  parseFloat(document.getElementById('bt-risk').value) / 100,
+      max_open_positions:  parseInt(document.getElementById('bt-maxpos').value),
+      stop_loss_pct:       parseFloat(document.getElementById('bt-sl').value) / 100,
+      target_1_pct:        parseFloat(document.getElementById('bt-t1').value) / 100,
+      target_2_pct:        parseFloat(document.getElementById('bt-t2').value) / 100,
+      target_3_pct:        parseFloat(document.getElementById('bt-t3').value) / 100,
+      vcp_min_score:       parseInt(document.getElementById('bt-score').value),
+      min_contractions:    parseInt(document.getElementById('bt-contr').value),
+      time_stop_days:      parseInt(document.getElementById('bt-tstp').value),
+      slippage_pct:        parseFloat(document.getElementById('bt-slip').value) / 100,
+      brokerage_per_trade: parseFloat(document.getElementById('bt-brk').value),
+      include_stt:         document.getElementById('bt-stt').checked,
+      use_market_filter:   document.getElementById('bt-mktfilter').checked,
+    },
+    tickers,
+  };
+}
+
+async function btRun() {
+  const btn = document.getElementById('bt-run-btn');
+  btn.disabled = true;
+  document.getElementById('bt-empty').style.display = '';
+  document.getElementById('bt-results').style.display = 'none';
+  document.getElementById('bt-prog').classList.add('show');
+  document.getElementById('bt-prog-fill').style.width = '0%';
+  document.getElementById('bt-prog-fill').classList.add('pulse');
+  document.getElementById('bt-prog-label').textContent = 'Starting…';
+  document.getElementById('bt-prog-pct').textContent = '0%';
+  document.getElementById('bt-prog-msg').textContent = '';
+
+  const body = btGetParams();
+  const r = await fetch('/api/backtest/start', {
+    method: 'POST',
+    headers: {'Content-Type': 'application/json'},
+    body: JSON.stringify(body),
+  });
+  if (!r.ok) {
+    const err = (await r.json().catch(()=>({}))).error || 'Error starting backtest';
+    alert(err); btn.disabled = false; return;
+  }
+  btTimer = setInterval(btPoll, 2500);
+}
+
+async function btPoll() {
+  const data = await fetch('/api/backtest/progress').then(r=>r.json()).catch(()=>null);
+  if (!data) return;
+  const prog = data.progress || {};
+  const pct = prog.pct || 0;
+  document.getElementById('bt-prog-fill').style.width = pct + '%';
+  document.getElementById('bt-prog-pct').textContent = pct + '%';
+  document.getElementById('bt-prog-label').textContent = data.running ? 'Running…' : (data.error ? '⚠ Error' : 'Complete ✓');
+  document.getElementById('bt-prog-msg').textContent = prog.msg || '';
+
+  if (!data.running && data.completed) {
+    clearInterval(btTimer); btTimer = null;
+    document.getElementById('bt-run-btn').disabled = false;
+    document.getElementById('bt-prog-fill').classList.remove('pulse');
+    if (data.error) { alert('Backtest error: ' + data.error); return; }
+    const res = await fetch('/api/backtest/results').then(r=>r.json()).catch(()=>null);
+    if (res) btShowResults(res);
+  }
+}
+
+function btShowResults(res) {
+  document.getElementById('bt-empty').style.display = 'none';
+  const rDiv = document.getElementById('bt-results');
+  rDiv.style.display = 'flex';
+
+  btRenderMetrics(res.metrics || {});
+  btRenderEquityCurve(res.equity_curve || [], res.trade_log || []);
+  btRenderMonthly(res.metrics?.monthly_returns || []);
+  btRenderMonteCarlo(res.monte_carlo || {}, res.trade_log || []);
+  btAllTrades = res.trade_log || [];
+  btRenderTradeLog(btAllTrades);
+}
+
+// ── Section 2: Metrics ────────────────────────────────────────────────────────
+function btRenderMetrics(m) {
+  const cards = [
+    { lbl: 'Total Return',    val: m.total_return_pct,    fmt: v => (v>=0?'+':'')+v.toFixed(1)+'%',  cls: v=>v>=0?'mc-pos':'mc-neg', sub: `CAGR ${(m.cagr_pct||0).toFixed(1)}%` },
+    { lbl: 'vs Nifty 500',    val: m.alpha_pct,           fmt: v => (v>=0?'+':'')+v.toFixed(1)+'%',  cls: v=>v>=0?'mc-pos':'mc-neg', sub: `Bench CAGR ${(m.benchmark_cagr_pct||0).toFixed(1)}%` },
+    { lbl: 'Sharpe Ratio',    val: m.sharpe_ratio,        fmt: v => v.toFixed(2),                      cls: v=>v>=1?'mc-pos':v>=0?'mc-neu':'mc-neg', sub: `Calmar ${(m.calmar_ratio||0).toFixed(2)}` },
+    { lbl: 'Max Drawdown',    val: m.max_drawdown_pct,    fmt: v => v.toFixed(1)+'%',                  cls: ()=>'mc-neg', sub: `Vol ${(m.volatility_annual||0).toFixed(1)}%/yr` },
+    { lbl: 'Win Rate',        val: m.win_rate_pct,        fmt: v => v.toFixed(1)+'%',                  cls: v=>v>=50?'mc-pos':'mc-neg', sub: `${m.total_trades||0} trades` },
+    { lbl: 'Profit Factor',   val: m.profit_factor,       fmt: v => (v===Infinity?'∞':v.toFixed(2)),   cls: v=>v>=1.5?'mc-pos':v>=1?'mc-neu':'mc-neg', sub: `Exp ${(m.expectancy_pct||0).toFixed(1)}%` },
+    { lbl: 'Avg Win',         val: m.avg_win_pct,         fmt: v => '+'+v.toFixed(1)+'%',              cls: ()=>'mc-pos', sub: `Avg loss ${(m.avg_loss_pct||0).toFixed(1)}%` },
+    { lbl: 'Avg Hold (days)', val: m.avg_hold_days,       fmt: v => v.toFixed(0),                      cls: ()=>'mc-neu', sub: `Best ${(m.best_trade_pct||0).toFixed(1)}% / Worst ${(m.worst_trade_pct||0).toFixed(1)}%` },
+  ];
+
+  const row = document.getElementById('bt-metrics-row');
+  row.innerHTML = cards.map(c => {
+    const v = c.val ?? 0;
+    const cls = c.cls(v);
+    const txt = isNaN(v) ? '—' : c.fmt(v);
+    return `<div class="metric-card">
+      <div class="mc-lbl">${c.lbl}</div>
+      <div class="mc-val ${cls}">${txt}</div>
+      <div class="mc-sub">${c.sub || ''}</div>
+    </div>`;
+  }).join('');
+}
+
+// ── Section 3: Equity curve ───────────────────────────────────────────────────
+function btRenderEquityCurve(curve, trades) {
+  if (!curve.length) return;
+  const dates = curve.map(d=>d.date);
+  const port  = curve.map(d=>d.portfolio);
+  const bench = curve.map(d=>d.benchmark);
+
+  // Drawdown
+  const dd = [];
+  let peak = port[0];
+  for (const v of port) {
+    if (v > peak) peak = v;
+    dd.push(((v - peak) / peak) * 100);
+  }
+
+  // Trade entry markers
+  const entryDates = [], entryVals = [], exitDates = [], exitVals = [];
+  const curveMap = Object.fromEntries(curve.map(d=>[d.date, d.portfolio]));
+  for (const t of trades) {
+    if (curveMap[t.Entry_Date]) {
+      entryDates.push(t.Entry_Date); entryVals.push(curveMap[t.Entry_Date]);
+    }
+    if (t.Exit_Type === 'stopped_out' && curveMap[t.Exit_Date]) {
+      exitDates.push(t.Exit_Date); exitVals.push(curveMap[t.Exit_Date]);
+    }
+  }
+
+  const traces = [
+    { x: dates, y: port,  name: 'Portfolio', line: {color:'#45ff88',width:2}, yaxis:'y' },
+    { x: dates, y: bench, name: 'Nifty 500', line: {color:'#6667a0',width:1.5,dash:'dash'}, yaxis:'y' },
+    { x: dates, y: dd,    name: 'Drawdown',  fill:'tozeroy', fillcolor:'rgba(255,69,69,0.12)',
+      line:{color:'rgba(255,69,69,0.4)',width:1}, yaxis:'y2' },
+    { x: entryDates, y: entryVals, name: 'Entry', mode:'markers',
+      marker:{color:'#00d4ff',size:5,symbol:'circle'}, yaxis:'y' },
+    { x: exitDates, y: exitVals, name: 'Stop', mode:'markers',
+      marker:{color:'#ff4545',size:6,symbol:'x'}, yaxis:'y' },
+  ];
+
+  const layout = {
+    ...PLOTLY_LAYOUT_BASE,
+    margin: { l:70, r:70, t:30, b:50 },
+    yaxis:  { ...PLOTLY_LAYOUT_BASE.yaxis, title:'Portfolio (₹)', tickformat:',.0f' },
+    yaxis2: { ...PLOTLY_LAYOUT_BASE.yaxis, title:'Drawdown %', overlaying:'y', side:'right',
+               tickformat:'.1f', ticksuffix:'%', showgrid:false },
+    legend: { ...PLOTLY_LAYOUT_BASE.legend, orientation:'h', y:1.08 },
+    hovermode: 'x unified',
+  };
+
+  Plotly.newPlot('bt-equity-chart', traces, layout, {responsive:true, displayModeBar:false});
+}
+
+// ── Section 4: Monthly heatmap ────────────────────────────────────────────────
+function btRenderMonthly(monthly) {
+  if (!monthly.length) return;
+
+  const years  = [...new Set(monthly.map(d=>d.year))].sort();
+  const months = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
+
+  const z = years.map(y => {
+    return Array.from({length:12}, (_,mi) => {
+      const found = monthly.find(d=>d.year===y && d.month===mi+1);
+      return found ? found.return_pct : null;
+    });
+  });
+
+  const text = z.map(row => row.map(v => v != null ? v.toFixed(1)+'%' : ''));
+
+  const trace = {
+    type: 'heatmap',
+    x: months, y: years.map(String), z,
+    text, texttemplate: '%{text}',
+    colorscale: [
+      [0,   '#ff4545'], [0.35,'#993333'], [0.5, '#1e1e3a'],
+      [0.65,'#2a6040'], [1,   '#45ff88'],
+    ],
+    zmid: 0,
+    showscale: true,
+    colorbar: { thickness: 12, tickfont:{color:'#ccccdd',size:10} },
+    hovertemplate: '%{y} %{x}: %{text}<extra></extra>',
+  };
+
+  const layout = {
+    ...PLOTLY_LAYOUT_BASE,
+    margin: { l:55, r:80, t:20, b:40 },
+    yaxis: { ...PLOTLY_LAYOUT_BASE.yaxis, type:'category', autorange:'reversed' },
+  };
+
+  Plotly.newPlot('bt-monthly-chart', [trace], layout, {responsive:true, displayModeBar:false});
+}
+
+// ── Section 5: Monte Carlo fan chart ─────────────────────────────────────────
+function btRenderMonteCarlo(mc, trades) {
+  const fd = mc.fan_data || [];
+  if (!fd.length) return;
+
+  const xNums = fd.map(d=>d.trade_num);
+  const initial = trades.length > 0
+    ? (parseFloat(document.getElementById('bt-capital').value) || 500000)
+    : 500000;
+
+  // Rebuild actual path from trade log
+  let equity = initial;
+  const actualPath = [initial];
+  for (const t of trades) {
+    equity *= (1 + t.Net_PL_Pct / 100);
+    actualPath.push(Math.round(equity));
+  }
+  const xActual = Array.from({length:actualPath.length}, (_,i)=>i);
+
+  const traces = [
+    // 5-95 band
+    { x: [...xNums, ...[...xNums].reverse()],
+      y: [...fd.map(d=>d.p95), ...[...fd.map(d=>d.p5)].reverse()],
+      fill:'toself', fillcolor:'rgba(100,100,160,0.12)', line:{color:'transparent'},
+      name:'5%–95%', showlegend:true },
+    // 25-75 band
+    { x: [...xNums, ...[...xNums].reverse()],
+      y: [...fd.map(d=>d.p75), ...[...fd.map(d=>d.p25)].reverse()],
+      fill:'toself', fillcolor:'rgba(0,212,255,0.1)', line:{color:'transparent'},
+      name:'25%–75%', showlegend:true },
+    // Median
+    { x: xNums, y: fd.map(d=>d.p50), name:'Median', line:{color:'#4488ff',width:2} },
+    // Actual
+    { x: xActual, y: actualPath, name:'Actual', line:{color:'#45ff88',width:2,dash:'solid'} },
+  ];
+
+  const layout = {
+    ...PLOTLY_LAYOUT_BASE,
+    xaxis: { ...PLOTLY_LAYOUT_BASE.xaxis, title:'Trade number' },
+    yaxis: { ...PLOTLY_LAYOUT_BASE.yaxis, title:'Portfolio (₹)', tickformat:',.0f' },
+    hovermode: 'x unified',
+  };
+
+  Plotly.newPlot('bt-mc-chart', traces, layout, {responsive:true, displayModeBar:false});
+
+  document.getElementById('bt-mc-summary').innerHTML =
+    `Probability of profit: <strong style="color:var(--lime)">${mc.prob_profit}%</strong> &nbsp;|&nbsp; ` +
+    `Probability of doubling: <strong style="color:var(--gold)">${mc.prob_double}%</strong> &nbsp;|&nbsp; ` +
+    `Median: <strong style="color:var(--cyan)">₹${(mc.pct_50th||0).toLocaleString('en-IN',{maximumFractionDigits:0})}</strong> &nbsp;|&nbsp; ` +
+    `Worst 5%: <strong style="color:var(--red)">₹${(mc.pct_5th||0).toLocaleString('en-IN',{maximumFractionDigits:0})}</strong> &nbsp;|&nbsp; ` +
+    `Best 5%: <strong style="color:var(--lime)">₹${(mc.pct_95th||0).toLocaleString('en-IN',{maximumFractionDigits:0})}</strong>`;
+}
+
+// ── Section 6: Trade log ──────────────────────────────────────────────────────
+const EXIT_BADGE = {
+  stopped_out:    'eb-stop',
+  time_stop:      'eb-time',
+  target_1:       'eb-t1',
+  target_2:       'eb-t2',
+  target_3:       'eb-t3',
+  trailing_stop:  'eb-trail',
+  end_of_backtest:'eb-eob',
+};
+const EXIT_LABEL = {
+  stopped_out:'Stopped', time_stop:'Time stop', target_1:'T1 hit',
+  target_2:'T2 hit', target_3:'T3 hit', trailing_stop:'Trail stop',
+  end_of_backtest:'End',
+};
+
+function btRenderTradeLog(rows) {
+  document.getElementById('bt-trade-count').textContent = rows.length + ' trade' + (rows.length!==1?'s':'');
+  const wrap = document.getElementById('bt-trade-log-wrap');
+  if (!rows.length) {
+    wrap.innerHTML = '<div class="empty"><div class="empty-icon">📋</div><h3>No trades in this filter</h3></div>';
+    return;
+  }
+
+  let h = `<table><thead><tr>
+    <th>Ticker</th><th>Entry</th><th>Exit</th><th>Days</th>
+    <th>Entry ₹</th><th>Exit ₹</th><th>P&amp;L %</th><th>P&amp;L ₹</th>
+    <th>Exit Type</th><th>Score</th><th>MAE %</th>
+  </tr></thead><tbody>`;
+
+  for (const t of rows) {
+    const plCls = t.Net_PL_Pct >= 0 ? 'pos' : 'neg';
+    const badge = EXIT_BADGE[t.Exit_Type] || 'eb-eob';
+    const lbl   = EXIT_LABEL[t.Exit_Type] || t.Exit_Type;
+    const scoreCls = t.VCP_Score >= 75 ? 'score-ex' : t.VCP_Score >= 55 ? 'score-gd' : 'score-ok';
+    h += `<tr>
+      <td><strong style="color:var(--cyan)">${esc(t.Ticker)}</strong></td>
+      <td class="dim">${t.Entry_Date}</td>
+      <td class="dim">${t.Exit_Date}</td>
+      <td class="dim">${t.Hold_Days}</td>
+      <td>₹${(t.Entry_Price||0).toLocaleString('en-IN',{minimumFractionDigits:2,maximumFractionDigits:2})}</td>
+      <td>₹${(t.Exit_Price||0).toLocaleString('en-IN',{minimumFractionDigits:2,maximumFractionDigits:2})}</td>
+      <td class="${plCls}">${t.Net_PL_Pct>=0?'+':''}${(t.Net_PL_Pct||0).toFixed(2)}%</td>
+      <td class="${plCls}">${t.Net_PL>=0?'+':''}₹${Math.abs(t.Net_PL||0).toLocaleString('en-IN',{maximumFractionDigits:0})}</td>
+      <td><span class="exit-badge ${badge}">${lbl}</span></td>
+      <td><span class="score-pill ${scoreCls}">${t.VCP_Score}</span></td>
+      <td class="${(t.MAE_Pct||0)>5?'neg':'dim'}">${(t.MAE_Pct||0).toFixed(1)}%</td>
+    </tr>`;
+  }
+  h += '</tbody></table>';
+  wrap.innerHTML = h;
+}
+
+function btFilterLog() {
+  const exitF = document.getElementById('bt-filter-exit').value;
+  const plF   = document.getElementById('bt-filter-pl').value;
+  let rows = btAllTrades;
+  if (exitF) rows = rows.filter(t => t.Exit_Type === exitF);
+  if (plF === 'win')  rows = rows.filter(t => t.Net_PL_Pct > 0);
+  if (plF === 'loss') rows = rows.filter(t => t.Net_PL_Pct <= 0);
+  btRenderTradeLog(rows);
+}
+
+// ── Optimiser ─────────────────────────────────────────────────────────────────
+async function btOptRun() {
+  const btn = document.getElementById('bt-opt-btn');
+  btn.disabled = true;
+
+  const body = btGetParams();
+  const paramGrid = {
+    stop_loss_pct:    [0.06, 0.08, 0.10],
+    vcp_min_score:    [40, 55, 70],
+    min_contractions: [2, 3],
+    time_stop_days:   [14, 21, 28],
+  };
+
+  const r = await fetch('/api/backtest/optimise/start', {
+    method: 'POST',
+    headers: {'Content-Type': 'application/json'},
+    body: JSON.stringify({ param_grid: paramGrid, base_params: body.params, tickers: body.tickers }),
+  });
+  if (!r.ok) {
+    const err = (await r.json().catch(()=>({}))).error || 'Error';
+    alert(err); btn.disabled = false; return;
+  }
+  btOptTimer = setInterval(btOptPoll, 4000);
+}
+
+async function btOptPoll() {
+  const data = await fetch('/api/backtest/optimise/progress').then(r=>r.json()).catch(()=>null);
+  if (!data) return;
+  if (!data.running && data.completed) {
+    clearInterval(btOptTimer); btOptTimer = null;
+    document.getElementById('bt-opt-btn').disabled = false;
+    if (data.error) { alert('Optimiser error: ' + data.error); return; }
+    const res = await fetch('/api/backtest/optimise/results').then(r=>r.json()).catch(()=>null);
+    if (res) btShowOptResults(res);
+  }
+}
+
+function btShowOptResults(res) {
+  const sec = document.getElementById('bt-opt-section');
+  sec.classList.add('show');
+  document.getElementById('bt-opt-count').textContent = (res.rows||[]).length + ' combinations';
+
+  if (!res.rows || !res.rows.length) return;
+
+  const metric = res.metric || 'sharpe_ratio';
+  const rows   = res.rows.slice(0, 30);   // top 30 for display
+
+  const slVals  = [...new Set(rows.map(r=>r.stop_loss_pct))].sort((a,b)=>a-b);
+  const scrVals = [...new Set(rows.map(r=>r.vcp_min_score))].sort((a,b)=>a-b);
+
+  const z    = slVals.map(sl => scrVals.map(sc => {
+    const found = rows.find(r=>r.stop_loss_pct===sl && r.vcp_min_score===sc);
+    return found ? (found[metric] ?? null) : null;
+  }));
+  const text = z.map(row => row.map(v => v!=null ? v.toFixed(2) : ''));
+
+  Plotly.newPlot('bt-opt-chart', [{
+    type:'heatmap',
+    x: scrVals.map(v=>'Score '+v), y: slVals.map(v=>'SL '+(v*100).toFixed(0)+'%'),
+    z, text, texttemplate:'%{text}',
+    colorscale:[[0,'#ff4545'],[0.5,'#1e1e3a'],[1,'#45ff88']],
+    showscale:true,
+    colorbar:{ thickness:12, tickfont:{color:'#ccccdd',size:10} },
+  }], {
+    ...PLOTLY_LAYOUT_BASE,
+    margin:{ l:80, r:80, t:20, b:60 },
+    xaxis:{ ...PLOTLY_LAYOUT_BASE.xaxis, title:'Min VCP Score' },
+    yaxis:{ ...PLOTLY_LAYOUT_BASE.yaxis, title:'Stop Loss %' },
+  }, {responsive:true, displayModeBar:false});
+
+  const bp = res.best_params || {};
+  document.getElementById('bt-opt-best').innerHTML =
+    `<strong style="color:var(--gold)">Best parameters found</strong> — ` +
+    Object.entries(bp).map(([k,v])=>`<span style="color:var(--cyan)">${k}</span>: <strong>${v}</strong>`).join(' &nbsp;|&nbsp; ') +
+    ` &nbsp;→ ${metric} = <strong style="color:var(--lime)">${(res.best_score||0).toFixed(3)}</strong>`;
+}
+
+// ── On load: hydrate state if server has existing data ────────────────────────
+(async () => {
+  try {
+    const [sd, vd] = await Promise.all([
+      fetch('/api/scan/progress').then(r=>r.json()),
+      fetch('/api/vcp/progress').then(r=>r.json()),
+    ]);
+
+    if (sd.results.length || sd.running) {
+      showEl('sepa-prog-wrap'); showEl('sepa-log-wrap');
+      sepaRows = sd.results; sepaApply(sd);
+      if (sd.running) {
+        document.getElementById('sepa-scan-btn').disabled = true;
+        document.getElementById('sepa-prog-fill').classList.add('pulse');
+        sepaTimer = setInterval(sepaPoll, 2000);
+      } else if (sd.results.length) {
+        document.getElementById('sepa-export-btn').disabled = false;
+        document.getElementById('sepa-prog-fill').classList.remove('pulse');
+      }
+    }
+
+    if (vd.results.length || vd.running) {
+      showEl('vcp-prog-wrap'); showEl('vcp-log-wrap');
+      vcpRows = vd.results; vcpApply(vd);
+      if (vd.running) {
+        document.getElementById('vcp-scan-btn').disabled = true;
+        document.getElementById('vcp-prog-fill').classList.add('pulse');
+        vcpTimer = setInterval(vcpPoll, 2000);
+      } else if (vd.results.length) {
+        document.getElementById('vcp-export-btn').disabled = false;
+        document.getElementById('vcp-prog-fill').classList.remove('pulse');
+      }
+    }
+  } catch (_) {}
+})();
+</script>
+</body>
+</html>
